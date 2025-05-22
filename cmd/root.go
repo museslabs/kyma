@@ -11,6 +11,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 
+	"github.com/museslabs/kyma/internal/config"
 	"github.com/museslabs/kyma/internal/tui"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
@@ -71,7 +72,22 @@ var rootCmd = &cobra.Command{
 				p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
 			}
 
-			go watchFileChanges(watcher, p, filename, absPath)
+			if configPath != "" {
+				configDir := filepath.Dir(configPath)
+				if err := watcher.Add(configDir); err != nil {
+					p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
+				}
+			} else {
+				home, err := os.UserHomeDir()
+				if err == nil {
+					configDir := filepath.Join(home, ".config")
+					if err := watcher.Add(configDir); err != nil {
+						p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
+					}
+				}
+			}
+
+			go watchFileChanges(watcher, p, filename, absPath, configPath)
 		}
 
 		if _, err := p.Run(); err != nil {
@@ -82,7 +98,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func watchFileChanges(watcher *fsnotify.Watcher, p *tea.Program, filename, absPath string) {
+func watchFileChanges(watcher *fsnotify.Watcher, p *tea.Program, filename, absPath string, configPath string) {
 	var debounceTimer *time.Timer
 
 	for {
@@ -94,7 +110,8 @@ func watchFileChanges(watcher *fsnotify.Watcher, p *tea.Program, filename, absPa
 
 			if event.Name == absPath || event.Name == filename ||
 				strings.HasSuffix(event.Name, "~") ||
-				strings.HasPrefix(event.Name, absPath+".") {
+				strings.HasPrefix(event.Name, absPath+".") ||
+				event.Name == configPath {
 
 				if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) {
 					if debounceTimer != nil {
@@ -142,6 +159,17 @@ func parseSlides(data string) (*tui.Slide, error) {
 		return nil, err
 	}
 
+	v, err := config.Initialize(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize configuration: %w", err)
+	}
+
+	mergedConfig, err := config.MergeConfigs(v, &p.Style)
+	if err != nil {
+		return nil, fmt.Errorf("failed to merge configurations: %w", err)
+	}
+	p.Style = *mergedConfig
+
 	root := &tui.Slide{
 		Data:       rootSlide,
 		Properties: p,
@@ -154,6 +182,12 @@ func parseSlides(data string) (*tui.Slide, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		mergedConfig, err := config.MergeConfigs(v, &p.Style)
+		if err != nil {
+			return nil, fmt.Errorf("failed to merge configurations: %w", err)
+		}
+		p.Style = *mergedConfig
 
 		curr.Next = &tui.Slide{
 			Data:       slide,
