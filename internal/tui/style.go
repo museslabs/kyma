@@ -16,6 +16,7 @@ type SlideStyle struct {
 	LipGlossStyle lipgloss.Style
 	Theme         GlamourTheme
 }
+
 type GlamourTheme struct {
 	Style ansi.StyleConfig
 	Name  string
@@ -26,6 +27,22 @@ type StyleConfig struct {
 	Border      lipgloss.Border `yaml:"border"`
 	BorderColor string          `yaml:"border_color"`
 	Theme       GlamourTheme    `yaml:"theme"`
+	Preset      string          `yaml:"preset"`
+}
+
+func (s *StyleConfig) Merge(other StyleConfig) {
+	if other.Layout.GetAlignHorizontal() != lipgloss.Left || other.Layout.GetAlignVertical() != lipgloss.Top { // Not the default
+		s.Layout = other.Layout
+	}
+	if other.Border != (lipgloss.Border{}) {
+		s.Border = other.Border
+	}
+	if other.BorderColor != "" {
+		s.BorderColor = other.BorderColor
+	}
+	if other.Theme.Name != "" {
+		s.Theme = other.Theme
+	}
 }
 
 func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
@@ -34,6 +51,7 @@ func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
 		Border      string `yaml:"border"`
 		BorderColor string `yaml:"border_color"`
 		Theme       string `yaml:"theme"`
+		Preset      string `yaml:"preset"`
 	}{}
 
 	var err error
@@ -42,14 +60,24 @@ func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
 		return err
 	}
 
-	s.Layout, err = getLayout(aux.Layout)
-	if err != nil {
-		return err
+	if aux.Layout != "" {
+		s.Layout, err = GetLayout(aux.Layout)
+		if err != nil {
+			return err
+		}
 	}
-
-	s.Border = getBorder(aux.Border)
-	s.BorderColor = aux.BorderColor
-	s.Theme = getTheme(aux.Theme)
+	if aux.Border != "" {
+		s.Border = GetBorder(aux.Border)
+	}
+	if aux.BorderColor != "" {
+		s.BorderColor = aux.BorderColor
+	}
+	if aux.Theme != "" {
+		s.Theme = GetTheme(aux.Theme)
+	}
+	if aux.Preset != "" {
+		s.Preset = aux.Preset
+	}
 
 	return nil
 }
@@ -82,7 +110,7 @@ func (s StyleConfig) ApplyStyle(width, height int) SlideStyle {
 	}
 }
 
-func getBorder(border string) lipgloss.Border {
+func GetBorder(border string) lipgloss.Border {
 	switch border {
 	case "rounded":
 		return lipgloss.RoundedBorder()
@@ -105,7 +133,7 @@ func getBorder(border string) lipgloss.Border {
 	}
 }
 
-func getLayout(layout string) (lipgloss.Style, error) {
+func GetLayout(layout string) (lipgloss.Style, error) {
 	style := lipgloss.NewStyle()
 
 	layout = strings.TrimSpace(layout)
@@ -152,7 +180,7 @@ func getLayoutPosition(p string) (lipgloss.Position, error) {
 	}
 }
 
-func getTheme(theme string) GlamourTheme {
+func GetTheme(theme string) GlamourTheme {
 	style, ok := styles.DefaultStyles[theme]
 	if !ok {
 		jsonBytes, err := os.ReadFile(theme)
