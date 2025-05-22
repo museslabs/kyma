@@ -15,10 +15,14 @@ import (
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
-var watch bool
+var (
+	watch      bool
+	configPath string
+)
 
 func init() {
 	rootCmd.Flags().BoolVarP(&watch, "watch", "w", false, "Watch for changes in the input file")
+	rootCmd.Flags().StringVarP(&configPath, "config", "c", "", "Path to config file")
 	rootCmd.AddCommand(versionCmd)
 }
 
