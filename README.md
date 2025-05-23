@@ -127,6 +127,56 @@ style:
 
 Layout can also be specified as a combination: `layout: center,right`
 
+### Global Configuration
+
+Kyma supports a global configuration file that can be used to set default styles and create named presets. The configuration file can be placed in either:
+
+- The current directory as `kyma.yaml`
+- The user's config directory as `~/.config/kyma.yaml`
+
+You can also specify a custom config file path using the `-c` or `--config` flag:
+
+```bash
+kyma -c /path/to/config.yaml presentation.md
+```
+
+The configuration file follows this structure:
+
+```yaml
+global:
+  style:
+    border: rounded
+    border_color: "#9999CC"
+    layout: center
+    theme: dracula
+
+presets:
+  minimal:
+    style:
+      border: hidden
+      theme: notty
+  dark:
+    style:
+      border: rounded
+      theme: dracula
+```
+
+You can use presets in your slides by specifying the preset name:
+
+```yaml
+---
+style:
+  preset: minimal
+---
+# This slide uses the minimal preset
+```
+
+Configuration precedence (from highest to lowest):
+
+1. Slide-specific configuration
+2. Named preset configuration
+3. Global configuration
+
 ### Theme Support
 
 Kyma supports both built-in Glamour themes and custom JSON theme files:
