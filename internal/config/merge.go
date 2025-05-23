@@ -25,6 +25,7 @@ func MergeConfigs(v *viper.Viper, slideConfig *tui.StyleConfig) (*tui.StyleConfi
 		BorderColor: globalConfig.BorderColor,
 		Layout:      layout,
 		Theme:       tui.GetTheme(globalConfig.Theme),
+		Preset:      slideConfig.Preset,
 	}
 
 	if slideConfig.Preset != "" {
