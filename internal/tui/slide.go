@@ -1,22 +1,15 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/goccy/go-yaml"
 	"github.com/museslabs/kyma/internal/config"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
-var configPath string
-
-func SetConfigPath(path string) {
-	configPath = path
-}
 
 type Slide struct {
 	Data             string
@@ -24,7 +17,7 @@ type Slide struct {
 	Next             *Slide
 	Style            config.SlideStyle
 	ActiveTransition transitions.Transition
-	Properties       Properties
+	Properties       config.Properties
 
 	preRenderedFrame string
 }
@@ -78,66 +71,4 @@ func (s Slide) view() string {
 		b.WriteString(s.Style.LipGlossStyle.Render(out))
 	}
 	return b.String()
-}
-
-type Properties struct {
-	Style      config.StyleConfig     `yaml:"style"`
-	Transition transitions.Transition `yaml:"transition"`
-}
-
-func (p *Properties) UnmarshalYAML(bytes []byte) error {
-	aux := struct {
-		Style struct {
-			Layout      string `yaml:"layout"`
-			Border      string `yaml:"border"`
-			BorderColor string `yaml:"border_color"`
-			Theme       string `yaml:"theme"`
-			Preset      string `yaml:"preset"`
-		} `yaml:"style"`
-		Transition string `yaml:"transition"`
-	}{}
-
-	if err := yaml.Unmarshal(bytes, &aux); err != nil {
-		return err
-	}
-
-	v, err := config.Initialize(configPath)
-	if err != nil {
-		return fmt.Errorf("failed to initialize configuration: %w", err)
-	}
-
-	slideConfig, err := config.ParseStyleConfig(
-		aux.Style.Layout,
-		aux.Style.Border,
-		aux.Style.BorderColor,
-		aux.Style.Theme,
-		aux.Style.Preset,
-	)
-
-	if err != nil {
-		return fmt.Errorf("failed to parse slide config: %w", err)
-	}
-
-	mergedConfig, err := config.MergeConfigs(v, slideConfig)
-	if err != nil {
-		return fmt.Errorf("failed to merge configurations: %w", err)
-	}
-
-	p.Transition = transitions.Get(aux.Transition, Fps)
-	p.Style = *mergedConfig
-
-	return nil
-}
-
-func NewProperties(properties string) (Properties, error) {
-	if properties == "" {
-		return Properties{Transition: transitions.Get("default", Fps)}, nil
-	}
-
-	var p Properties
-	if err := yaml.Unmarshal([]byte(properties), &p); err != nil {
-		return Properties{}, err
-	}
-
-	return p, nil
 }

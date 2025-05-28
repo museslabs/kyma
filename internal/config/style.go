@@ -10,7 +10,13 @@ import (
 	"github.com/charmbracelet/glamour/styles"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/goccy/go-yaml"
+	"github.com/museslabs/kyma/internal/tui/transitions"
 )
+
+type Properties struct {
+	Style      StyleConfig            `yaml:"style"`
+	Transition transitions.Transition `yaml:"transition"`
+}
 
 type SlideStyle struct {
 	LipGlossStyle lipgloss.Style
