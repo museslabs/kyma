@@ -26,13 +26,6 @@ type PresetConfig struct {
 	Style StyleConfig `mapstructure:"style"`
 }
 
-type StyleConfig struct {
-	Border      string `mapstructure:"border"`
-	BorderColor string `mapstructure:"border_color"`
-	Layout      string `mapstructure:"layout"`
-	Theme       string `mapstructure:"theme"`
-}
-
 func Initialize(configPath string) (*viper.Viper, error) {
 	v := viper.New()
 	v.SetConfigName(configName)

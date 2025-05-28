@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/museslabs/kyma/internal/config"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
@@ -40,7 +41,7 @@ var keys = keyMap{
 
 const Fps = 60
 
-func style(width, height int, config StyleConfig) SlideStyle {
+func style(width, height int, config config.StyleConfig) config.SlideStyle {
 	return config.ApplyStyle(width, height)
 }
 

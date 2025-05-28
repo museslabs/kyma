@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/museslabs/kyma/internal/tui"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/viper"
 )
 
@@ -9,22 +9,17 @@ import (
 // 1. Global config
 // 2. Named preset (if specified)
 // 3. Slide-specific config
-func MergeConfigs(v *viper.Viper, slideConfig *tui.StyleConfig) (*tui.StyleConfig, error) {
+func MergeConfigs(v *viper.Viper, slideConfig *StyleConfig) (*StyleConfig, error) {
 	globalConfig := &StyleConfig{}
 	if err := v.UnmarshalKey("global.style", globalConfig); err != nil {
 		return nil, err
 	}
 
-	layout, err := tui.GetLayout(globalConfig.Layout)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &tui.StyleConfig{
-		Border:      tui.GetBorder(globalConfig.Border),
+	result := &StyleConfig{
+		Border:      globalConfig.Border,
 		BorderColor: globalConfig.BorderColor,
-		Layout:      layout,
-		Theme:       tui.GetTheme(globalConfig.Theme),
+		Layout:      globalConfig.Layout,
+		Theme:       globalConfig.Theme,
 		Preset:      slideConfig.Preset,
 	}
 
@@ -34,21 +29,17 @@ func MergeConfigs(v *viper.Viper, slideConfig *tui.StyleConfig) (*tui.StyleConfi
 			return nil, err
 		}
 
-		if presetConfig.Border != "" {
-			result.Border = tui.GetBorder(presetConfig.Border)
+		if presetConfig.Border != (lipgloss.Border{}) {
+			result.Border = presetConfig.Border
 		}
 		if presetConfig.BorderColor != "" {
 			result.BorderColor = presetConfig.BorderColor
 		}
-		if presetConfig.Layout != "" {
-			layout, err := tui.GetLayout(presetConfig.Layout)
-			if err != nil {
-				return nil, err
-			}
-			result.Layout = layout
+		if presetConfig.Layout.GetAlignHorizontal() != lipgloss.Left || presetConfig.Layout.GetAlignVertical() != lipgloss.Top {
+			result.Layout = presetConfig.Layout
 		}
-		if presetConfig.Theme != "" {
-			result.Theme = tui.GetTheme(presetConfig.Theme)
+		if presetConfig.Theme != (GlamourTheme{}) {
+			result.Theme = presetConfig.Theme
 		}
 	}
 

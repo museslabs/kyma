@@ -1,4 +1,4 @@
-package tui
+package config
 
 import (
 	"encoding/json"
@@ -60,24 +60,15 @@ func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
 		return err
 	}
 
-	if aux.Layout != "" {
-		s.Layout, err = GetLayout(aux.Layout)
-		if err != nil {
-			return err
-		}
+	s.Layout, err = GetLayout(aux.Layout)
+	if err != nil {
+		return err
 	}
-	if aux.Border != "" {
-		s.Border = GetBorder(aux.Border)
-	}
-	if aux.BorderColor != "" {
-		s.BorderColor = aux.BorderColor
-	}
-	if aux.Theme != "" {
-		s.Theme = GetTheme(aux.Theme)
-	}
-	if aux.Preset != "" {
-		s.Preset = aux.Preset
-	}
+
+	s.Border = GetBorder(aux.Border)
+	s.BorderColor = aux.BorderColor
+	s.Theme = GetTheme(aux.Theme)
+	s.Preset = aux.Preset
 
 	return nil
 }
@@ -163,23 +154,6 @@ func GetLayout(layout string) (lipgloss.Style, error) {
 	return style.Align(p1, p2), nil
 }
 
-func getLayoutPosition(p string) (lipgloss.Position, error) {
-	switch strings.TrimSpace(p) {
-	case "center":
-		return lipgloss.Center, nil
-	case "left":
-		return lipgloss.Left, nil
-	case "right":
-		return lipgloss.Right, nil
-	case "top":
-		return lipgloss.Top, nil
-	case "bottom":
-		return lipgloss.Bottom, nil
-	default:
-		return 0, fmt.Errorf("invalid position: %s", strings.TrimSpace(p))
-	}
-}
-
 func GetTheme(theme string) GlamourTheme {
 	style, ok := styles.DefaultStyles[theme]
 	if !ok {
@@ -197,4 +171,21 @@ func GetTheme(theme string) GlamourTheme {
 	}
 
 	return GlamourTheme{Style: *style, Name: theme}
+}
+
+func getLayoutPosition(p string) (lipgloss.Position, error) {
+	switch strings.TrimSpace(p) {
+	case "center":
+		return lipgloss.Center, nil
+	case "left":
+		return lipgloss.Left, nil
+	case "right":
+		return lipgloss.Right, nil
+	case "top":
+		return lipgloss.Top, nil
+	case "bottom":
+		return lipgloss.Bottom, nil
+	default:
+		return 0, fmt.Errorf("invalid position: %s", strings.TrimSpace(p))
+	}
 }
