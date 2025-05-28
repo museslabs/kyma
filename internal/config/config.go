@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/museslabs/kyma/internal/tui/transitions"
 	"github.com/spf13/viper"
 )
 
@@ -25,11 +26,13 @@ type Config struct {
 }
 
 type GlobalConfig struct {
-	Style StyleConfig `mapstructure:"style"`
+	Style      StyleConfig            `mapstructure:"style"`
+	Transition transitions.Transition `mapstructure:"transition"`
 }
 
 type PresetConfig struct {
-	Style StyleConfig `mapstructure:"style"`
+	Style      StyleConfig            `mapstructure:"style"`
+	Transition transitions.Transition `mapstructure:"transition"`
 }
 
 func Initialize(configPath string) (*viper.Viper, error) {
@@ -78,16 +81,21 @@ func createDefaultConfig(home string) error {
     border_color: "#9999CC"
     layout: center
     theme: dracula
+  transition: none
 
 presets:
   minimal:
     style:
       border: hidden
       theme: notty
+    transition: none
   dark:
     style:
       border: rounded
       theme: dracula
+    transition: swipeLeft
+  animated:
+    transition: slideUp
 `
 
 	if err := os.WriteFile(configFile, []byte(defaultConfig), 0644); err != nil {
