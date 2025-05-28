@@ -36,18 +36,21 @@ type StyleConfig struct {
 	Preset      string          `yaml:"preset"`
 }
 
-func (s *StyleConfig) Merge(other StyleConfig) {
-	if other.Layout.GetAlignHorizontal() != lipgloss.Left || other.Layout.GetAlignVertical() != lipgloss.Top { // Not the default
-		s.Layout = other.Layout
+func (s *Properties) Merge(other Properties) {
+	if other.Style.Layout.GetAlignHorizontal() != lipgloss.Left || other.Style.Layout.GetAlignVertical() != lipgloss.Top { // Not the default
+		s.Style.Layout = other.Style.Layout
 	}
-	if other.Border != (lipgloss.Border{}) {
-		s.Border = other.Border
+	if other.Style.Border != (lipgloss.Border{}) {
+		s.Style.Border = other.Style.Border
 	}
-	if other.BorderColor != "" {
-		s.BorderColor = other.BorderColor
+	if other.Style.BorderColor != "" {
+		s.Style.BorderColor = other.Style.BorderColor
 	}
-	if other.Theme.Name != "" {
-		s.Theme = other.Theme
+	if other.Style.Theme.Name != "" {
+		s.Style.Theme = other.Style.Theme
+	}
+	if other.Transition != nil {
+		s.Transition = other.Transition
 	}
 }
 
@@ -196,7 +199,7 @@ func getLayoutPosition(p string) (lipgloss.Position, error) {
 	}
 }
 
-func ParseStyleConfig(layout, border, borderColor, theme, preset string) (*StyleConfig, error) {
+func parseStyleConfig(layout, border, borderColor, theme, preset string) (*StyleConfig, error) {
 	config := &StyleConfig{}
 
 	var err error
@@ -222,4 +225,80 @@ func ParseStyleConfig(layout, border, borderColor, theme, preset string) (*Style
 	config.Preset = preset
 
 	return config, nil
+}
+
+func (p *Properties) UnmarshalYAML(bytes []byte) error {
+	aux := struct {
+		Style struct {
+			Layout      string `yaml:"layout"`
+			Border      string `yaml:"border"`
+			BorderColor string `yaml:"border_color"`
+			Theme       string `yaml:"theme"`
+			Preset      string `yaml:"preset"`
+		} `yaml:"style"`
+		Transition string `yaml:"transition"`
+	}{}
+
+	if err := yaml.Unmarshal(bytes, &aux); err != nil {
+		return err
+	}
+
+	v, err := Initialize(configPath)
+	if err != nil {
+		return fmt.Errorf("failed to initialize configuration: %w", err)
+	}
+
+	slideConfig, err := parseStyleConfig(
+		aux.Style.Layout,
+		aux.Style.Border,
+		aux.Style.BorderColor,
+		aux.Style.Theme,
+		aux.Style.Preset,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to parse slide config: %w", err)
+	}
+
+	var transition transitions.Transition
+	if aux.Transition != "" {
+		transition = transitions.Get(aux.Transition, transitions.Fps)
+	} else {
+		transition = nil
+	}
+
+	mergedProperties, err := MergeProperties(v, slideConfig, &transition)
+
+	if err != nil {
+		return fmt.Errorf("failed to merge configurations: %w", err)
+	}
+
+	p.Transition = mergedProperties.Transition
+	p.Style = mergedProperties.Style
+
+	return nil
+}
+
+func NewProperties(properties string) (Properties, error) {
+	if properties == "" {
+		v, err := Initialize(configPath)
+		if err != nil {
+			return Properties{}, fmt.Errorf("failed to initialize configuration: %w", err)
+		}
+
+		var transition transitions.Transition = nil
+		prop, err := MergeProperties(v, &StyleConfig{}, &transition)
+		if err != nil {
+			return Properties{}, err
+		}
+
+		return *prop, nil
+	}
+
+	var p Properties
+	if err := yaml.Unmarshal([]byte(properties), &p); err != nil {
+		return Properties{}, err
+	}
+
+	return p, nil
 }

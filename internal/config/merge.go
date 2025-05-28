@@ -4,85 +4,102 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/museslabs/kyma/internal/tui/transitions"
 	"github.com/spf13/viper"
 )
 
-// MergeConfigs merges configurations in order of precedence:
+// MergeProperties merges style and transition configurations in order of precedence:
 // 1. Global config
 // 2. Named preset (if specified)
 // 3. Slide-specific config
-func MergeConfigs(v *viper.Viper, slideConfig *StyleConfig) (*StyleConfig, error) {
+func MergeProperties(v *viper.Viper, slideStyle *StyleConfig, slideTransition *transitions.Transition) (*Properties, error) {
 	// Parse global config from viper
 	globalConfigAux := struct {
-		Layout      string `mapstructure:"layout"`
-		Border      string `mapstructure:"border"`
-		BorderColor string `mapstructure:"border_color"`
-		Theme       string `mapstructure:"theme"`
-		Preset      string `mapstructure:"preset"`
-	}{}
-
-	if err := v.UnmarshalKey("global.style", &globalConfigAux); err != nil {
-		return nil, err
-	}
-
-	globalConfig, err := ParseStyleConfig(
-		globalConfigAux.Layout,
-		globalConfigAux.Border,
-		globalConfigAux.BorderColor,
-		globalConfigAux.Theme,
-		globalConfigAux.Preset,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse global config: %w", err)
-	}
-
-	result := &StyleConfig{
-		Border:      globalConfig.Border,
-		BorderColor: globalConfig.BorderColor,
-		Layout:      globalConfig.Layout,
-		Theme:       globalConfig.Theme,
-		Preset:      slideConfig.Preset,
-	}
-
-	if slideConfig.Preset != "" {
-		presetConfigAux := struct {
+		Style struct {
 			Layout      string `mapstructure:"layout"`
 			Border      string `mapstructure:"border"`
 			BorderColor string `mapstructure:"border_color"`
 			Theme       string `mapstructure:"theme"`
 			Preset      string `mapstructure:"preset"`
+		} `mapstructure:"style"`
+		Transition string `mapstructure:"transition"`
+	}{}
+
+	if err := v.UnmarshalKey("global", &globalConfigAux); err != nil {
+		return nil, err
+	}
+
+	globalStyle, err := parseStyleConfig(
+		globalConfigAux.Style.Layout,
+		globalConfigAux.Style.Border,
+		globalConfigAux.Style.BorderColor,
+		globalConfigAux.Style.Theme,
+		globalConfigAux.Style.Preset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse global config: %w", err)
+	}
+
+	result := &Properties{
+		Style: StyleConfig{
+			Border:      globalStyle.Border,
+			BorderColor: globalStyle.BorderColor,
+			Layout:      globalStyle.Layout,
+			Theme:       globalStyle.Theme,
+			Preset:      slideStyle.Preset,
+		},
+		Transition: transitions.Get(globalConfigAux.Transition, transitions.Fps),
+	}
+
+	if slideStyle.Preset != "" {
+		presetConfigAux := struct {
+			Style struct {
+				Layout      string `mapstructure:"layout"`
+				Border      string `mapstructure:"border"`
+				BorderColor string `mapstructure:"border_color"`
+				Theme       string `mapstructure:"theme"`
+				Preset      string `mapstructure:"preset"`
+			} `mapstructure:"style"`
+			Transition string `mapstructure:"transition"`
 		}{}
 
-		if err := v.UnmarshalKey("presets."+slideConfig.Preset+".style", &presetConfigAux); err != nil {
+		if err := v.UnmarshalKey("presets."+slideStyle.Preset, &presetConfigAux); err != nil {
 			return nil, err
 		}
 
-		presetConfig, err := ParseStyleConfig(
-			presetConfigAux.Layout,
-			presetConfigAux.Border,
-			presetConfigAux.BorderColor,
-			presetConfigAux.Theme,
-			presetConfigAux.Preset,
+		presetStyle, err := parseStyleConfig(
+			presetConfigAux.Style.Layout,
+			presetConfigAux.Style.Border,
+			presetConfigAux.Style.BorderColor,
+			presetConfigAux.Style.Theme,
+			presetConfigAux.Style.Preset,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse preset config: %w", err)
 		}
 
-		if presetConfig.Border != (lipgloss.Border{}) {
-			result.Border = presetConfig.Border
+		if presetStyle.Border != (lipgloss.Border{}) {
+			result.Style.Border = presetStyle.Border
 		}
-		if presetConfig.BorderColor != "" {
-			result.BorderColor = presetConfig.BorderColor
+		if presetStyle.BorderColor != "" {
+			result.Style.BorderColor = presetStyle.BorderColor
 		}
-		if presetConfig.Layout.GetAlignHorizontal() != lipgloss.Left || presetConfig.Layout.GetAlignVertical() != lipgloss.Top {
-			result.Layout = presetConfig.Layout
+		if presetStyle.Layout.GetAlignHorizontal() != lipgloss.Left || presetStyle.Layout.GetAlignVertical() != lipgloss.Top {
+			result.Style.Layout = presetStyle.Layout
 		}
-		if presetConfig.Theme != (GlamourTheme{}) {
-			result.Theme = presetConfig.Theme
+		if presetStyle.Theme != (GlamourTheme{}) {
+			result.Style.Theme = presetStyle.Theme
+		}
+
+		if presetConfigAux.Transition != "" {
+			result.Transition = transitions.Get(presetConfigAux.Transition, transitions.Fps)
 		}
 	}
 
-	result.Merge(*slideConfig)
+	result.Merge(Properties{
+		Style:      *slideStyle,
+		Transition: *slideTransition,
+	})
 
 	return result, nil
 }

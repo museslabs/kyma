@@ -4,16 +4,20 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/museslabs/kyma/internal/tui/transitions"
 	"github.com/spf13/viper"
 )
 
-func TestMergeConfigs(t *testing.T) {
+func TestMergeProperties(t *testing.T) {
 	tests := []struct {
-		name        string
-		globalStyle StyleConfig
-		presetStyle StyleConfig
-		slideStyle  StyleConfig
-		want        StyleConfig
+		name             string
+		globalStyle      StyleConfig
+		globalTransition transitions.Transition
+		presetStyle      StyleConfig
+		presetTransition transitions.Transition
+		slideStyle       StyleConfig
+		slideTransition  transitions.Transition
+		want             Properties
 	}{
 		{
 			name: "global config only",
@@ -23,12 +27,17 @@ func TestMergeConfigs(t *testing.T) {
 				Layout:      mustGetLayout(t, "center"),
 				Theme:       getTheme("dracula"),
 			},
-			slideStyle: StyleConfig{},
-			want: StyleConfig{
-				Border:      getBorder("rounded"),
-				BorderColor: "#9999CC",
-				Layout:      mustGetLayout(t, "center"),
-				Theme:       getTheme("dracula"),
+			globalTransition: transitions.Get("none", transitions.Fps),
+			slideStyle:       StyleConfig{},
+			slideTransition:  nil,
+			want: Properties{
+				Style: StyleConfig{
+					Border:      getBorder("rounded"),
+					BorderColor: "#9999CC",
+					Layout:      mustGetLayout(t, "center"),
+					Theme:       getTheme("dracula"),
+				},
+				Transition: transitions.Get("none", transitions.Fps),
 			},
 		},
 		{
@@ -39,19 +48,25 @@ func TestMergeConfigs(t *testing.T) {
 				Layout:      mustGetLayout(t, "center"),
 				Theme:       getTheme("dracula"),
 			},
+			globalTransition: transitions.Get("none", transitions.Fps),
 			presetStyle: StyleConfig{
 				Border: getBorder("hidden"),
 				Theme:  getTheme("notty"),
 			},
+			presetTransition: transitions.Get("slideUp", transitions.Fps),
 			slideStyle: StyleConfig{
 				Preset: "minimal",
 			},
-			want: StyleConfig{
-				Border:      getBorder("hidden"),
-				BorderColor: "#9999CC",
-				Layout:      mustGetLayout(t, "center"),
-				Theme:       getTheme("notty"),
-				Preset:      "minimal",
+			slideTransition: nil,
+			want: Properties{
+				Style: StyleConfig{
+					Border:      getBorder("hidden"),
+					BorderColor: "#9999CC",
+					Layout:      mustGetLayout(t, "center"),
+					Theme:       getTheme("notty"),
+					Preset:      "minimal",
+				},
+				Transition: transitions.Get("slideUp", transitions.Fps),
 			},
 		},
 		{
@@ -62,21 +77,27 @@ func TestMergeConfigs(t *testing.T) {
 				Layout:      mustGetLayout(t, "center"),
 				Theme:       getTheme("dracula"),
 			},
+			globalTransition: transitions.Get("none", transitions.Fps),
 			presetStyle: StyleConfig{
 				Border: getBorder("hidden"),
 				Theme:  getTheme("notty"),
 			},
+			presetTransition: transitions.Get("slideUp", transitions.Fps),
 			slideStyle: StyleConfig{
 				Preset:      "minimal",
 				BorderColor: "#FF0000",
 				Layout:      mustGetLayout(t, "right"),
 			},
-			want: StyleConfig{
-				Border:      getBorder("hidden"),
-				BorderColor: "#FF0000",
-				Layout:      mustGetLayout(t, "right"),
-				Theme:       getTheme("notty"),
-				Preset:      "minimal",
+			slideTransition: transitions.Get("swipeLeft", transitions.Fps),
+			want: Properties{
+				Style: StyleConfig{
+					Border:      getBorder("hidden"),
+					BorderColor: "#FF0000",
+					Layout:      mustGetLayout(t, "right"),
+					Theme:       getTheme("notty"),
+					Preset:      "minimal",
+				},
+				Transition: transitions.Get("swipeLeft", transitions.Fps),
 			},
 		},
 	}
@@ -84,30 +105,43 @@ func TestMergeConfigs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := viper.New()
-			v.Set("global.style", tt.globalStyle)
+
+			// Set global style config
+			v.Set("global.style.border", "rounded")
+			v.Set("global.style.border_color", "#9999CC")
+			v.Set("global.style.layout", "center")
+			v.Set("global.style.theme", "dracula")
+			v.Set("global.transition", "none")
+
 			if tt.slideStyle.Preset != "" {
-				v.Set("presets."+tt.slideStyle.Preset+".style", tt.presetStyle)
+				// Set preset style config
+				v.Set("presets."+tt.slideStyle.Preset+".style.border", "hidden")
+				v.Set("presets."+tt.slideStyle.Preset+".style.theme", "notty")
+				v.Set("presets."+tt.slideStyle.Preset+".transition", "slideUp")
 			}
 
-			got, err := MergeConfigs(v, &tt.slideStyle)
+			got, err := MergeProperties(v, &tt.slideStyle, &tt.slideTransition)
 			if err != nil {
-				t.Fatalf("MergeConfigs() error = %v", err)
+				t.Fatalf("MergeProperties() error = %v", err)
 			}
 
-			if got.Border != tt.want.Border {
-				t.Errorf("Border = %v, want %v", got.Border, tt.want.Border)
+			if got.Style.Border != tt.want.Style.Border {
+				t.Errorf("Border = %v, want %v", got.Style.Border, tt.want.Style.Border)
 			}
-			if got.BorderColor != tt.want.BorderColor {
-				t.Errorf("BorderColor = %v, want %v", got.BorderColor, tt.want.BorderColor)
+			if got.Style.BorderColor != tt.want.Style.BorderColor {
+				t.Errorf("BorderColor = %v, want %v", got.Style.BorderColor, tt.want.Style.BorderColor)
 			}
-			if got.Layout.GetAlignHorizontal() != tt.want.Layout.GetAlignHorizontal() {
-				t.Errorf("Layout horizontal alignment = %v, want %v", got.Layout.GetAlignHorizontal(), tt.want.Layout.GetAlignHorizontal())
+			if got.Style.Layout.GetAlignHorizontal() != tt.want.Style.Layout.GetAlignHorizontal() {
+				t.Errorf("Layout horizontal alignment = %v, want %v", got.Style.Layout.GetAlignHorizontal(), tt.want.Style.Layout.GetAlignHorizontal())
 			}
-			if got.Theme.Name != tt.want.Theme.Name {
-				t.Errorf("Theme = %v, want %v", got.Theme.Name, tt.want.Theme.Name)
+			if got.Style.Theme.Name != tt.want.Style.Theme.Name {
+				t.Errorf("Theme = %v, want %v", got.Style.Theme.Name, tt.want.Style.Theme.Name)
 			}
-			if got.Preset != tt.want.Preset {
-				t.Errorf("Preset = %v, want %v", got.Preset, tt.want.Preset)
+			if got.Style.Preset != tt.want.Style.Preset {
+				t.Errorf("Preset = %v, want %v", got.Style.Preset, tt.want.Style.Preset)
+			}
+			if got.Transition.Name() != tt.want.Transition.Name() {
+				t.Errorf("Transition = %v, want %v", got.Transition.Name(), tt.want.Transition.Name())
 			}
 		})
 	}
