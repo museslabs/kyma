@@ -15,6 +15,8 @@ const (
 
 type FrameMsg time.Time
 
+const Fps = 60
+
 func Animate(fps time.Duration) tea.Cmd {
 	return tea.Tick(time.Second/fps, func(t time.Time) tea.Msg {
 		return FrameMsg(t)
