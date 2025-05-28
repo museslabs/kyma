@@ -11,6 +11,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 
+	"github.com/museslabs/kyma/internal/config"
 	"github.com/museslabs/kyma/internal/tui"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
@@ -152,10 +153,11 @@ func Execute() {
 func parseSlides(data string) (*tui.Slide, error) {
 	slides := strings.Split(string(data), "----\n")
 
-	tui.SetConfigPath(configPath)
+	config.SetConfigPath(configPath)
 
 	rootSlide, properties := parseSlide(slides[0])
-	p, err := tui.NewProperties(properties)
+	p, err := config.NewProperties(properties)
+
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +170,7 @@ func parseSlides(data string) (*tui.Slide, error) {
 	curr := root
 	for _, slide := range slides[1:] {
 		slide, properties := parseSlide(slide)
-		p, err := tui.NewProperties(properties)
+		p, err := config.NewProperties(properties)
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +204,7 @@ func createErrorSlide(err error, transition string) *tui.Slide {
 			"# Error while updating\n\n%s\n\nIf you believe this is our fault, please open up an issue on GitHub",
 			err.Error(),
 		),
-		Properties: tui.Properties{
+		Properties: config.Properties{
 			Transition: transitions.Get(transition, transitions.Fps),
 		},
 	}

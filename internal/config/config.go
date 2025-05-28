@@ -13,6 +13,12 @@ const (
 	configType = "yaml"
 )
 
+var configPath string
+
+func SetConfigPath(path string) {
+	configPath = path
+}
+
 type Config struct {
 	Global  GlobalConfig            `mapstructure:"global"`
 	Presets map[string]PresetConfig `mapstructure:"presets"`
