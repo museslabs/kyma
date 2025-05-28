@@ -11,7 +11,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 
-	"github.com/museslabs/kyma/internal/config"
 	"github.com/museslabs/kyma/internal/tui"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
@@ -153,22 +152,13 @@ func Execute() {
 func parseSlides(data string) (*tui.Slide, error) {
 	slides := strings.Split(string(data), "----\n")
 
+	tui.SetConfigPath(configPath)
+
 	rootSlide, properties := parseSlide(slides[0])
 	p, err := tui.NewProperties(properties)
 	if err != nil {
 		return nil, err
 	}
-
-	v, err := config.Initialize(configPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize configuration: %w", err)
-	}
-
-	mergedConfig, err := config.MergeConfigs(v, &p.Style)
-	if err != nil {
-		return nil, fmt.Errorf("failed to merge configurations: %w", err)
-	}
-	p.Style = *mergedConfig
 
 	root := &tui.Slide{
 		Data:       rootSlide,
@@ -182,12 +172,6 @@ func parseSlides(data string) (*tui.Slide, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		mergedConfig, err := config.MergeConfigs(v, &p.Style)
-		if err != nil {
-			return nil, fmt.Errorf("failed to merge configurations: %w", err)
-		}
-		p.Style = *mergedConfig
 
 		curr.Next = &tui.Slide{
 			Data:       slide,

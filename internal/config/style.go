@@ -189,3 +189,31 @@ func getLayoutPosition(p string) (lipgloss.Position, error) {
 		return 0, fmt.Errorf("invalid position: %s", strings.TrimSpace(p))
 	}
 }
+
+func ParseStyleConfig(layout, border, borderColor, theme, preset string) (*StyleConfig, error) {
+	config := &StyleConfig{}
+
+	var err error
+	if layout != "" {
+		config.Layout, err = getLayout(layout)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse layout: %w", err)
+		}
+	}
+
+	if border != "" {
+		config.Border = getBorder(border)
+	}
+
+	if borderColor != "" {
+		config.BorderColor = borderColor
+	}
+
+	if theme != "" {
+		config.Theme = getTheme(theme)
+	}
+
+	config.Preset = preset
+
+	return config, nil
+}
