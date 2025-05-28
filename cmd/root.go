@@ -203,7 +203,7 @@ func createErrorSlide(err error, transition string) *tui.Slide {
 			err.Error(),
 		),
 		Properties: tui.Properties{
-			Transition: transitions.Get(transition, tui.Fps),
+			Transition: transitions.Get(transition, transitions.Fps),
 		},
 	}
 }

@@ -39,8 +39,6 @@ var keys = keyMap{
 	),
 }
 
-const Fps = 60
-
 func style(width, height int, config config.StyleConfig) config.SlideStyle {
 	return config.ApplyStyle(width, height)
 }
@@ -104,7 +102,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.slide = m.slide.Next
 			m.slide.ActiveTransition = m.slide.Properties.Transition.Start(m.width, m.height, transitions.Forwards)
-			return m, transitions.Animate(Fps)
+			return m, transitions.Animate(transitions.Fps)
 		} else if key.Matches(msg, m.keys.Prev) {
 			if m.slide.Prev == nil || m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating() {
 				return m, nil
@@ -117,7 +115,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				Opposite().
 				Start(m.width, m.height, transitions.Backwards)
 
-			return m, transitions.Animate(Fps)
+			return m, transitions.Animate(transitions.Fps)
 		}
 	case transitions.FrameMsg:
 		slide, cmd := m.slide.Update()
