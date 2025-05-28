@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/goccy/go-yaml"
+	"github.com/museslabs/kyma/internal/config"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
@@ -14,7 +15,7 @@ type Slide struct {
 	Data             string
 	Prev             *Slide
 	Next             *Slide
-	Style            SlideStyle
+	Style            config.SlideStyle
 	ActiveTransition transitions.Transition
 	Properties       Properties
 
@@ -73,14 +74,14 @@ func (s Slide) view() string {
 }
 
 type Properties struct {
-	Style      StyleConfig            `yaml:"style"`
+	Style      config.StyleConfig     `yaml:"style"`
 	Transition transitions.Transition `yaml:"transition"`
 }
 
 func (p *Properties) UnmarshalYAML(bytes []byte) error {
 	aux := struct {
-		Style      StyleConfig `yaml:"style"`
-		Transition string      `yaml:"transition"`
+		Style      config.StyleConfig `yaml:"style"`
+		Transition string             `yaml:"transition"`
 	}{}
 
 	if err := yaml.Unmarshal(bytes, &aux); err != nil {

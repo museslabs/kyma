@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/museslabs/kyma/internal/tui"
 	"github.com/spf13/viper"
 )
 
@@ -13,70 +12,70 @@ func TestMergeConfigs(t *testing.T) {
 		name        string
 		globalStyle StyleConfig
 		presetStyle StyleConfig
-		slideStyle  tui.StyleConfig
-		want        tui.StyleConfig
+		slideStyle  StyleConfig
+		want        StyleConfig
 	}{
 		{
 			name: "global config only",
 			globalStyle: StyleConfig{
-				Border:      "rounded",
-				BorderColor: "#9999CC",
-				Layout:      "center",
-				Theme:       "dracula",
-			},
-			slideStyle: tui.StyleConfig{},
-			want: tui.StyleConfig{
-				Border:      tui.GetBorder("rounded"),
+				Border:      GetBorder("rounded"),
 				BorderColor: "#9999CC",
 				Layout:      mustGetLayout(t, "center"),
-				Theme:       tui.GetTheme("dracula"),
+				Theme:       GetTheme("dracula"),
+			},
+			slideStyle: StyleConfig{},
+			want: StyleConfig{
+				Border:      GetBorder("rounded"),
+				BorderColor: "#9999CC",
+				Layout:      mustGetLayout(t, "center"),
+				Theme:       GetTheme("dracula"),
 			},
 		},
 		{
 			name: "global and preset config",
 			globalStyle: StyleConfig{
-				Border:      "rounded",
-				BorderColor: "#9999CC",
-				Layout:      "center",
-				Theme:       "dracula",
-			},
-			presetStyle: StyleConfig{
-				Border: "hidden",
-				Theme:  "notty",
-			},
-			slideStyle: tui.StyleConfig{
-				Preset: "minimal",
-			},
-			want: tui.StyleConfig{
-				Border:      tui.GetBorder("hidden"),
+				Border:      GetBorder("rounded"),
 				BorderColor: "#9999CC",
 				Layout:      mustGetLayout(t, "center"),
-				Theme:       tui.GetTheme("notty"),
+				Theme:       GetTheme("dracula"),
+			},
+			presetStyle: StyleConfig{
+				Border: GetBorder("hidden"),
+				Theme:  GetTheme("notty"),
+			},
+			slideStyle: StyleConfig{
+				Preset: "minimal",
+			},
+			want: StyleConfig{
+				Border:      GetBorder("hidden"),
+				BorderColor: "#9999CC",
+				Layout:      mustGetLayout(t, "center"),
+				Theme:       GetTheme("notty"),
 				Preset:      "minimal",
 			},
 		},
 		{
 			name: "global, preset and slide config",
 			globalStyle: StyleConfig{
-				Border:      "rounded",
+				Border:      GetBorder("rounded"),
 				BorderColor: "#9999CC",
-				Layout:      "center",
-				Theme:       "dracula",
+				Layout:      mustGetLayout(t, "center"),
+				Theme:       GetTheme("dracula"),
 			},
 			presetStyle: StyleConfig{
-				Border: "hidden",
-				Theme:  "notty",
+				Border: GetBorder("hidden"),
+				Theme:  GetTheme("notty"),
 			},
-			slideStyle: tui.StyleConfig{
+			slideStyle: StyleConfig{
 				Preset:      "minimal",
 				BorderColor: "#FF0000",
 				Layout:      mustGetLayout(t, "right"),
 			},
-			want: tui.StyleConfig{
-				Border:      tui.GetBorder("hidden"),
+			want: StyleConfig{
+				Border:      GetBorder("hidden"),
 				BorderColor: "#FF0000",
 				Layout:      mustGetLayout(t, "right"),
-				Theme:       tui.GetTheme("notty"),
+				Theme:       GetTheme("notty"),
 				Preset:      "minimal",
 			},
 		},
@@ -116,7 +115,7 @@ func TestMergeConfigs(t *testing.T) {
 
 func mustGetLayout(t *testing.T, layout string) lipgloss.Style {
 	t.Helper()
-	style, err := tui.GetLayout(layout)
+	style, err := GetLayout(layout)
 	if err != nil {
 		t.Fatalf("failed to get layout: %v", err)
 	}
