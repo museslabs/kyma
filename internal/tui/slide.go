@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,6 +11,12 @@ import (
 	"github.com/museslabs/kyma/internal/config"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
+
+var configPath string
+
+func SetConfigPath(path string) {
+	configPath = path
+}
 
 type Slide struct {
 	Data             string
@@ -80,15 +87,44 @@ type Properties struct {
 
 func (p *Properties) UnmarshalYAML(bytes []byte) error {
 	aux := struct {
-		Style      config.StyleConfig `yaml:"style"`
-		Transition string             `yaml:"transition"`
+		Style struct {
+			Layout      string `yaml:"layout"`
+			Border      string `yaml:"border"`
+			BorderColor string `yaml:"border_color"`
+			Theme       string `yaml:"theme"`
+			Preset      string `yaml:"preset"`
+		} `yaml:"style"`
+		Transition string `yaml:"transition"`
 	}{}
 
 	if err := yaml.Unmarshal(bytes, &aux); err != nil {
 		return err
 	}
+
+	v, err := config.Initialize(configPath)
+	if err != nil {
+		return fmt.Errorf("failed to initialize configuration: %w", err)
+	}
+
+	slideConfig, err := config.ParseStyleConfig(
+		aux.Style.Layout,
+		aux.Style.Border,
+		aux.Style.BorderColor,
+		aux.Style.Theme,
+		aux.Style.Preset,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to parse slide config: %w", err)
+	}
+
+	mergedConfig, err := config.MergeConfigs(v, slideConfig)
+	if err != nil {
+		return fmt.Errorf("failed to merge configurations: %w", err)
+	}
+
 	p.Transition = transitions.Get(aux.Transition, Fps)
-	p.Style = aux.Style
+	p.Style = *mergedConfig
 
 	return nil
 }
