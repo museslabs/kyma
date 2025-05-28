@@ -18,53 +18,53 @@ func TestMergeConfigs(t *testing.T) {
 		{
 			name: "global config only",
 			globalStyle: StyleConfig{
-				Border:      GetBorder("rounded"),
+				Border:      getBorder("rounded"),
 				BorderColor: "#9999CC",
 				Layout:      mustGetLayout(t, "center"),
-				Theme:       GetTheme("dracula"),
+				Theme:       getTheme("dracula"),
 			},
 			slideStyle: StyleConfig{},
 			want: StyleConfig{
-				Border:      GetBorder("rounded"),
+				Border:      getBorder("rounded"),
 				BorderColor: "#9999CC",
 				Layout:      mustGetLayout(t, "center"),
-				Theme:       GetTheme("dracula"),
+				Theme:       getTheme("dracula"),
 			},
 		},
 		{
 			name: "global and preset config",
 			globalStyle: StyleConfig{
-				Border:      GetBorder("rounded"),
+				Border:      getBorder("rounded"),
 				BorderColor: "#9999CC",
 				Layout:      mustGetLayout(t, "center"),
-				Theme:       GetTheme("dracula"),
+				Theme:       getTheme("dracula"),
 			},
 			presetStyle: StyleConfig{
-				Border: GetBorder("hidden"),
-				Theme:  GetTheme("notty"),
+				Border: getBorder("hidden"),
+				Theme:  getTheme("notty"),
 			},
 			slideStyle: StyleConfig{
 				Preset: "minimal",
 			},
 			want: StyleConfig{
-				Border:      GetBorder("hidden"),
+				Border:      getBorder("hidden"),
 				BorderColor: "#9999CC",
 				Layout:      mustGetLayout(t, "center"),
-				Theme:       GetTheme("notty"),
+				Theme:       getTheme("notty"),
 				Preset:      "minimal",
 			},
 		},
 		{
 			name: "global, preset and slide config",
 			globalStyle: StyleConfig{
-				Border:      GetBorder("rounded"),
+				Border:      getBorder("rounded"),
 				BorderColor: "#9999CC",
 				Layout:      mustGetLayout(t, "center"),
-				Theme:       GetTheme("dracula"),
+				Theme:       getTheme("dracula"),
 			},
 			presetStyle: StyleConfig{
-				Border: GetBorder("hidden"),
-				Theme:  GetTheme("notty"),
+				Border: getBorder("hidden"),
+				Theme:  getTheme("notty"),
 			},
 			slideStyle: StyleConfig{
 				Preset:      "minimal",
@@ -72,10 +72,10 @@ func TestMergeConfigs(t *testing.T) {
 				Layout:      mustGetLayout(t, "right"),
 			},
 			want: StyleConfig{
-				Border:      GetBorder("hidden"),
+				Border:      getBorder("hidden"),
 				BorderColor: "#FF0000",
 				Layout:      mustGetLayout(t, "right"),
-				Theme:       GetTheme("notty"),
+				Theme:       getTheme("notty"),
 				Preset:      "minimal",
 			},
 		},
@@ -115,7 +115,7 @@ func TestMergeConfigs(t *testing.T) {
 
 func mustGetLayout(t *testing.T, layout string) lipgloss.Style {
 	t.Helper()
-	style, err := GetLayout(layout)
+	style, err := getLayout(layout)
 	if err != nil {
 		t.Fatalf("failed to get layout: %v", err)
 	}
