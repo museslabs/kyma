@@ -60,14 +60,14 @@ func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
 		return err
 	}
 
-	s.Layout, err = GetLayout(aux.Layout)
+	s.Layout, err = getLayout(aux.Layout)
 	if err != nil {
 		return err
 	}
 
-	s.Border = GetBorder(aux.Border)
+	s.Border = getBorder(aux.Border)
 	s.BorderColor = aux.BorderColor
-	s.Theme = GetTheme(aux.Theme)
+	s.Theme = getTheme(aux.Theme)
 	s.Preset = aux.Preset
 
 	return nil
@@ -101,7 +101,7 @@ func (s StyleConfig) ApplyStyle(width, height int) SlideStyle {
 	}
 }
 
-func GetBorder(border string) lipgloss.Border {
+func getBorder(border string) lipgloss.Border {
 	switch border {
 	case "rounded":
 		return lipgloss.RoundedBorder()
@@ -124,7 +124,7 @@ func GetBorder(border string) lipgloss.Border {
 	}
 }
 
-func GetLayout(layout string) (lipgloss.Style, error) {
+func getLayout(layout string) (lipgloss.Style, error) {
 	style := lipgloss.NewStyle()
 
 	layout = strings.TrimSpace(layout)
@@ -154,7 +154,7 @@ func GetLayout(layout string) (lipgloss.Style, error) {
 	return style.Align(p1, p2), nil
 }
 
-func GetTheme(theme string) GlamourTheme {
+func getTheme(theme string) GlamourTheme {
 	style, ok := styles.DefaultStyles[theme]
 	if !ok {
 		jsonBytes, err := os.ReadFile(theme)
