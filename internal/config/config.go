@@ -49,6 +49,12 @@ func Initialize(configPath string) (*viper.Viper, error) {
 		v.SetConfigFile(configPath)
 	} else {
 		v.AddConfigPath(".")
+
+		// Check XDG_CONFIG_HOME first, then fall back to ~/.config
+		xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
+		if xdgConfigHome != "" {
+			v.AddConfigPath(xdgConfigHome)
+		}
 		v.AddConfigPath(filepath.Join(home, ".config"))
 
 		if err := createDefaultConfig(home); err != nil {
