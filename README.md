@@ -165,16 +165,15 @@ You can use presets in your slides by specifying the preset name:
 
 ```yaml
 ---
-style:
-  preset: minimal
+preset: minimal
 ---
 # This slide uses the minimal preset
 ```
 
 Configuration precedence (from highest to lowest):
 
-1. Slide-specific configuration
-2. Named preset configuration
+1. Named preset configuration
+2. Slide-specific configuration
 3. Global configuration
 
 ### Theme Support
