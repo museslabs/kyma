@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/viper"
 
 	"github.com/museslabs/kyma/internal/tui/transitions"
@@ -25,6 +27,34 @@ type config struct {
 type presetConfig struct {
 	Style      StyleConfig            `mapstructure:"style"`
 	Transition transitions.Transition `mapstructure:"transition"`
+}
+
+func styleConfigDecodeHook() mapstructure.DecodeHookFunc {
+	return func(from reflect.Type, to reflect.Type, data any) (any, error) {
+		if to == reflect.TypeOf(StyleConfig{}) {
+			m, ok := data.(map[string]any)
+			if !ok {
+				return data, nil
+			}
+			var s StyleConfig
+			if err := s.DecodeMap(m); err != nil {
+				return nil, err
+			}
+			return s, nil
+		}
+		return data, nil
+	}
+}
+
+func transitionDecodeHook() mapstructure.DecodeHookFunc {
+	return func(from reflect.Type, to reflect.Type, data any) (any, error) {
+		if from.Kind() == reflect.String &&
+			to == reflect.TypeOf((*transitions.Transition)(nil)).Elem() {
+			name := data.(string)
+			return transitions.Get(name, transitions.Fps), nil
+		}
+		return data, nil
+	}
 }
 
 func Load(configPath string) error {
@@ -55,6 +85,22 @@ func Load(configPath string) error {
 
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("failed to read config: %w", err)
+	}
+
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			styleConfigDecodeHook(),
+			transitionDecodeHook(),
+		),
+		Result:  &GlobalConfig,
+		TagName: "mapstructure",
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := decoder.Decode(viper.AllSettings()); err != nil {
+		return err
 	}
 
 	return nil

@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/glamour/ansi"
 	"github.com/charmbracelet/glamour/styles"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/goccy/go-yaml"
 
 	"github.com/museslabs/kyma/internal/tui/transitions"
@@ -34,6 +35,30 @@ type StyleConfig struct {
 	Border      lipgloss.Border `yaml:"border"`
 	BorderColor string          `yaml:"border_color"`
 	Theme       GlamourTheme    `yaml:"theme"`
+}
+
+func (s *StyleConfig) DecodeMap(input map[string]any) error {
+	aux := struct {
+		Layout      string `mapstructure:"layout"`
+		Border      string `mapstructure:"border"`
+		BorderColor string `mapstructure:"border_color"`
+		Theme       string `mapstructure:"theme"`
+	}{}
+
+	if err := mapstructure.Decode(input, &aux); err != nil {
+		return err
+	}
+
+	var err error
+	s.Layout, err = getLayout(aux.Layout)
+	if err != nil {
+		return err
+	}
+	s.Border = getBorder(aux.Border)
+	s.BorderColor = aux.BorderColor
+	s.Theme = getTheme(aux.Theme)
+
+	return nil
 }
 
 func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
