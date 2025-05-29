@@ -53,9 +53,9 @@ func Initialize(configPath string) (*viper.Viper, error) {
 		// Check XDG_CONFIG_HOME first, then fall back to ~/.config
 		xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
 		if xdgConfigHome != "" {
-			v.AddConfigPath(xdgConfigHome)
+			v.AddConfigPath(filepath.Join(xdgConfigHome, "kyma"))
 		}
-		v.AddConfigPath(filepath.Join(home, ".config"))
+		v.AddConfigPath(filepath.Join(home, ".config", "kyma"))
 
 		if err := createDefaultConfig(home); err != nil {
 			return nil, fmt.Errorf("failed to create default config: %w", err)
@@ -70,7 +70,7 @@ func Initialize(configPath string) (*viper.Viper, error) {
 }
 
 func createDefaultConfig(home string) error {
-	configDir := filepath.Join(home, ".config")
+	configDir := filepath.Join(home, ".config", "kyma")
 	configFile := filepath.Join(configDir, fmt.Sprintf("%s.%s", configName, configType))
 
 	if _, err := os.Stat(configFile); err == nil {
