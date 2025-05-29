@@ -49,8 +49,8 @@ var keys = keyMap{
 	),
 }
 
-func style(width, height int, config config.StyleConfig) config.SlideStyle {
-	return config.ApplyStyle(width, height)
+func style(width, height int, styleConfig config.StyleConfig) config.SlideStyle {
+	return styleConfig.Apply(width, height)
 }
 
 type model struct {

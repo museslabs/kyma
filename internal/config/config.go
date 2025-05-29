@@ -5,8 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/museslabs/kyma/internal/tui/transitions"
 	"github.com/spf13/viper"
+
+	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
 const (
@@ -14,59 +15,49 @@ const (
 	configType = "yaml"
 )
 
-var configPath string
+var GlobalConfig config
 
-func SetConfigPath(path string) {
-	configPath = path
+type config struct {
+	Global  presetConfig            `mapstructure:"global"`
+	Presets map[string]presetConfig `mapstructure:"presets"`
 }
 
-type Config struct {
-	Global  GlobalConfig            `mapstructure:"global"`
-	Presets map[string]PresetConfig `mapstructure:"presets"`
-}
-
-type GlobalConfig struct {
+type presetConfig struct {
 	Style      StyleConfig            `mapstructure:"style"`
 	Transition transitions.Transition `mapstructure:"transition"`
 }
 
-type PresetConfig struct {
-	Style      StyleConfig            `mapstructure:"style"`
-	Transition transitions.Transition `mapstructure:"transition"`
-}
-
-func Initialize(configPath string) (*viper.Viper, error) {
-	v := viper.New()
-	v.SetConfigName(configName)
-	v.SetConfigType(configType)
+func Load(configPath string) error {
+	viper.SetConfigName(configName)
+	viper.SetConfigType(configType)
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user home directory: %w", err)
+		return fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
 	if configPath != "" {
-		v.SetConfigFile(configPath)
+		viper.SetConfigFile(configPath)
 	} else {
-		v.AddConfigPath(".")
+		viper.AddConfigPath(".")
 
 		// Check XDG_CONFIG_HOME first, then fall back to ~/.config
 		xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
 		if xdgConfigHome != "" {
-			v.AddConfigPath(filepath.Join(xdgConfigHome, "kyma"))
+			viper.AddConfigPath(filepath.Join(xdgConfigHome, "kyma"))
 		}
-		v.AddConfigPath(filepath.Join(home, ".config", "kyma"))
+		viper.AddConfigPath(filepath.Join(home, ".config", "kyma"))
 
 		if err := createDefaultConfig(home); err != nil {
-			return nil, fmt.Errorf("failed to create default config: %w", err)
+			return fmt.Errorf("failed to create default config: %w", err)
 		}
 	}
 
-	if err := v.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("failed to read config: %w", err)
+	if err := viper.ReadInConfig(); err != nil {
+		return fmt.Errorf("failed to read config: %w", err)
 	}
 
-	return v, nil
+	return nil
 }
 
 func createDefaultConfig(home string) error {

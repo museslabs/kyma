@@ -40,6 +40,10 @@ var rootCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := config.Load(configPath); err != nil {
+			return err
+		}
+
 		filename := args[0]
 
 		data, err := os.ReadFile(filename)
@@ -98,7 +102,12 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func watchFileChanges(watcher *fsnotify.Watcher, p *tea.Program, filename, absPath string, configPath string) {
+func watchFileChanges(
+	watcher *fsnotify.Watcher,
+	p *tea.Program,
+	filename, absPath string,
+	configPath string,
+) {
 	var debounceTimer *time.Timer
 
 	for {
@@ -152,8 +161,6 @@ func Execute() {
 
 func parseSlides(data string) (*tui.Slide, error) {
 	slides := strings.Split(string(data), "----\n")
-
-	config.SetConfigPath(configPath)
 
 	rootSlide, properties := parseSlide(slides[0])
 	p, err := config.NewProperties(properties)

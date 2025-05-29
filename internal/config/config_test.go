@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func TestInitialize(t *testing.T) {
+func TestLoad(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "kyma-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
@@ -71,7 +71,7 @@ presets:
 			os.Setenv("HOME", tmpDir)
 			defer os.Setenv("HOME", oldHome)
 
-			v, err := Initialize(tt.configPath)
+			err := Load(tt.configPath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Initialize() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -79,50 +79,74 @@ presets:
 
 			if tt.checkVals {
 				if tt.configPath == testConfigPath {
-					if v.GetString("global.style.border") != "rounded" {
-						t.Errorf("global.style.border = %v, want %v", v.GetString("global.style.border"), "rounded")
+					if viper.GetString("global.style.border") != "rounded" {
+						t.Errorf(
+							"global.style.border = %v, want %v",
+							viper.GetString("global.style.border"),
+							"rounded",
+						)
 					}
-					if v.GetString("global.style.border_color") != "#FF0000" {
-						t.Errorf("global.style.border_color = %v, want %v", v.GetString("global.style.border_color"), "#FF0000")
+					if viper.GetString("global.style.border_color") != "#FF0000" {
+						t.Errorf(
+							"global.style.border_color = %v, want %v",
+							viper.GetString("global.style.border_color"),
+							"#FF0000",
+						)
 					}
-					if v.GetString("global.style.layout") != "center" {
-						t.Errorf("global.style.layout = %v, want %v", v.GetString("global.style.layout"), "center")
+					if viper.GetString("global.style.layout") != "center" {
+						t.Errorf(
+							"global.style.layout = %v, want %v",
+							viper.GetString("global.style.layout"),
+							"center",
+						)
 					}
-					if v.GetString("global.style.theme") != "dracula" {
-						t.Errorf("global.style.theme = %v, want %v", v.GetString("global.style.theme"), "dracula")
+					if viper.GetString("global.style.theme") != "dracula" {
+						t.Errorf(
+							"global.style.theme = %v, want %v",
+							viper.GetString("global.style.theme"),
+							"dracula",
+						)
 					}
 
-					if v.GetString("presets.test.style.border") != "hidden" {
-						t.Errorf("presets.test.style.border = %v, want %v", v.GetString("presets.test.style.border"), "hidden")
+					if viper.GetString("presets.test.style.border") != "hidden" {
+						t.Errorf(
+							"presets.test.style.border = %v, want %v",
+							viper.GetString("presets.test.style.border"),
+							"hidden",
+						)
 					}
-					if v.GetString("presets.test.style.theme") != "notty" {
-						t.Errorf("presets.test.style.theme = %v, want %v", v.GetString("presets.test.style.theme"), "notty")
+					if viper.GetString("presets.test.style.theme") != "notty" {
+						t.Errorf(
+							"presets.test.style.theme = %v, want %v",
+							viper.GetString("presets.test.style.theme"),
+							"notty",
+						)
 					}
 				} else {
-					if v.GetString("global.style.border") != "rounded" {
-						t.Errorf("global.style.border = %v, want %v", v.GetString("global.style.border"), "rounded")
+					if viper.GetString("global.style.border") != "rounded" {
+						t.Errorf("global.style.border = %v, want %v", viper.GetString("global.style.border"), "rounded")
 					}
-					if v.GetString("global.style.border_color") != "#9999CC" {
-						t.Errorf("global.style.border_color = %v, want %v", v.GetString("global.style.border_color"), "#9999CC")
+					if viper.GetString("global.style.border_color") != "#9999CC" {
+						t.Errorf("global.style.border_color = %v, want %v", viper.GetString("global.style.border_color"), "#9999CC")
 					}
-					if v.GetString("global.style.layout") != "center" {
-						t.Errorf("global.style.layout = %v, want %v", v.GetString("global.style.layout"), "center")
+					if viper.GetString("global.style.layout") != "center" {
+						t.Errorf("global.style.layout = %v, want %v", viper.GetString("global.style.layout"), "center")
 					}
-					if v.GetString("global.style.theme") != "dracula" {
-						t.Errorf("global.style.theme = %v, want %v", v.GetString("global.style.theme"), "dracula")
+					if viper.GetString("global.style.theme") != "dracula" {
+						t.Errorf("global.style.theme = %v, want %v", viper.GetString("global.style.theme"), "dracula")
 					}
 
-					if v.GetString("presets.minimal.style.border") != "hidden" {
-						t.Errorf("presets.minimal.style.border = %v, want %v", v.GetString("presets.minimal.style.border"), "hidden")
+					if viper.GetString("presets.minimal.style.border") != "hidden" {
+						t.Errorf("presets.minimal.style.border = %v, want %v", viper.GetString("presets.minimal.style.border"), "hidden")
 					}
-					if v.GetString("presets.minimal.style.theme") != "notty" {
-						t.Errorf("presets.minimal.style.theme = %v, want %v", v.GetString("presets.minimal.style.theme"), "notty")
+					if viper.GetString("presets.minimal.style.theme") != "notty" {
+						t.Errorf("presets.minimal.style.theme = %v, want %v", viper.GetString("presets.minimal.style.theme"), "notty")
 					}
-					if v.GetString("presets.dark.style.border") != "rounded" {
-						t.Errorf("presets.dark.style.border = %v, want %v", v.GetString("presets.dark.style.border"), "rounded")
+					if viper.GetString("presets.dark.style.border") != "rounded" {
+						t.Errorf("presets.dark.style.border = %v, want %v", viper.GetString("presets.dark.style.border"), "rounded")
 					}
-					if v.GetString("presets.dark.style.theme") != "dracula" {
-						t.Errorf("presets.dark.style.theme = %v, want %v", v.GetString("presets.dark.style.theme"), "dracula")
+					if viper.GetString("presets.dark.style.theme") != "dracula" {
+						t.Errorf("presets.dark.style.theme = %v, want %v", viper.GetString("presets.dark.style.theme"), "dracula")
 					}
 				}
 			}
@@ -147,35 +171,66 @@ func TestCreateDefaultConfig(t *testing.T) {
 		t.Errorf("Default config file was not created")
 	}
 
-	v := viper.New()
-	v.SetConfigFile(configFile)
-	if err := v.ReadInConfig(); err != nil {
+	viper.SetConfigFile(configFile)
+	if err := viper.ReadInConfig(); err != nil {
 		t.Fatalf("Failed to read default config: %v", err)
 	}
 
-	if v.GetString("global.style.border") != "rounded" {
-		t.Errorf("global.style.border = %v, want %v", v.GetString("global.style.border"), "rounded")
+	if viper.GetString("global.style.border") != "rounded" {
+		t.Errorf(
+			"global.style.border = %v, want %v",
+			viper.GetString("global.style.border"),
+			"rounded",
+		)
 	}
-	if v.GetString("global.style.border_color") != "#9999CC" {
-		t.Errorf("global.style.border_color = %v, want %v", v.GetString("global.style.border_color"), "#9999CC")
+	if viper.GetString("global.style.border_color") != "#9999CC" {
+		t.Errorf(
+			"global.style.border_color = %v, want %v",
+			viper.GetString("global.style.border_color"),
+			"#9999CC",
+		)
 	}
-	if v.GetString("global.style.layout") != "center" {
-		t.Errorf("global.style.layout = %v, want %v", v.GetString("global.style.layout"), "center")
+	if viper.GetString("global.style.layout") != "center" {
+		t.Errorf(
+			"global.style.layout = %v, want %v",
+			viper.GetString("global.style.layout"),
+			"center",
+		)
 	}
-	if v.GetString("global.style.theme") != "dracula" {
-		t.Errorf("global.style.theme = %v, want %v", v.GetString("global.style.theme"), "dracula")
+	if viper.GetString("global.style.theme") != "dracula" {
+		t.Errorf(
+			"global.style.theme = %v, want %v",
+			viper.GetString("global.style.theme"),
+			"dracula",
+		)
 	}
 
-	if v.GetString("presets.minimal.style.border") != "hidden" {
-		t.Errorf("presets.minimal.style.border = %v, want %v", v.GetString("presets.minimal.style.border"), "hidden")
+	if viper.GetString("presets.minimal.style.border") != "hidden" {
+		t.Errorf(
+			"presets.minimal.style.border = %v, want %v",
+			viper.GetString("presets.minimal.style.border"),
+			"hidden",
+		)
 	}
-	if v.GetString("presets.minimal.style.theme") != "notty" {
-		t.Errorf("presets.minimal.style.theme = %v, want %v", v.GetString("presets.minimal.style.theme"), "notty")
+	if viper.GetString("presets.minimal.style.theme") != "notty" {
+		t.Errorf(
+			"presets.minimal.style.theme = %v, want %v",
+			viper.GetString("presets.minimal.style.theme"),
+			"notty",
+		)
 	}
-	if v.GetString("presets.dark.style.border") != "rounded" {
-		t.Errorf("presets.dark.style.border = %v, want %v", v.GetString("presets.dark.style.border"), "rounded")
+	if viper.GetString("presets.dark.style.border") != "rounded" {
+		t.Errorf(
+			"presets.dark.style.border = %v, want %v",
+			viper.GetString("presets.dark.style.border"),
+			"rounded",
+		)
 	}
-	if v.GetString("presets.dark.style.theme") != "dracula" {
-		t.Errorf("presets.dark.style.theme = %v, want %v", v.GetString("presets.dark.style.theme"), "dracula")
+	if viper.GetString("presets.dark.style.theme") != "dracula" {
+		t.Errorf(
+			"presets.dark.style.theme = %v, want %v",
+			viper.GetString("presets.dark.style.theme"),
+			"dracula",
+		)
 	}
 }
