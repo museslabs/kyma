@@ -133,6 +133,11 @@ func watchFileChanges(
 							return
 						}
 
+						if err := config.Load(configPath); err != nil {
+							p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
+							return
+						}
+
 						newRoot, err := parseSlides(string(data))
 						if err != nil {
 							p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
