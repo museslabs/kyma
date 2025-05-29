@@ -72,3 +72,19 @@ func (s Slide) view() string {
 	}
 	return b.String()
 }
+
+func (s *Slide) First() *Slide {
+	current := s
+	for current.Prev != nil {
+		current = current.Prev
+	}
+	return current
+}
+
+func (s *Slide) Last() *Slide {
+	current := s
+	for current.Next != nil {
+		current = current.Next
+	}
+	return current
+}
