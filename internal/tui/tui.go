@@ -11,9 +11,11 @@ import (
 )
 
 type keyMap struct {
-	Quit key.Binding
-	Next key.Binding
-	Prev key.Binding
+	Quit   key.Binding
+	Next   key.Binding
+	Prev   key.Binding
+	Top    key.Binding
+	Bottom key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -36,6 +38,14 @@ var keys = keyMap{
 	Prev: key.NewBinding(
 		key.WithKeys("left", "h"),
 		key.WithHelp("<, h", "previous"),
+	),
+	Top: key.NewBinding(
+		key.WithKeys("home", "shift+up", "0"),
+		key.WithHelp("home, shift+up, 0", "top"),
+	),
+	Bottom: key.NewBinding(
+		key.WithKeys("end", "shift+down", "$"),
+		key.WithHelp("end, shift+down, $", "bottom"),
 	),
 }
 
@@ -116,6 +126,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				Start(m.width, m.height, transitions.Backwards)
 
 			return m, transitions.Animate(transitions.Fps)
+		} else if key.Matches(msg, m.keys.Top) {
+			m.slide = m.slide.First()
+			return m, nil
+		} else if key.Matches(msg, m.keys.Bottom) {
+			m.slide = m.slide.Last()
+			return m, nil
 		}
 	case transitions.FrameMsg:
 		slide, cmd := m.slide.Update()
