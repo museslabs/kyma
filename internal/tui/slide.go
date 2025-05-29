@@ -10,7 +10,6 @@ import (
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
-
 type Slide struct {
 	Data             string
 	Prev             *Slide
@@ -63,9 +62,17 @@ func (s Slide) view() string {
 	if s.ActiveTransition != nil && s.ActiveTransition.Animating() {
 		direction := s.ActiveTransition.Direction()
 		if direction == transitions.Backwards {
-			b.WriteString(s.ActiveTransition.View(s.Next.View(), s.Style.LipGlossStyle.Render(out)))
+			if s.Next == nil {
+				panic("backwards transition at the last slide")
+			} else {
+				b.WriteString(s.ActiveTransition.View(s.Next.View(), s.Style.LipGlossStyle.Render(out)))
+			}
 		} else {
-			b.WriteString(s.ActiveTransition.View(s.Prev.View(), s.Style.LipGlossStyle.Render(out)))
+			if s.Prev != nil {
+				b.WriteString(s.ActiveTransition.View(s.Prev.View(), s.Style.LipGlossStyle.Render(out)))
+			} else {
+				b.WriteString(s.Style.LipGlossStyle.Render(out))
+			}
 		}
 	} else {
 		b.WriteString(s.Style.LipGlossStyle.Render(out))
