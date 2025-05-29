@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/glamour/styles"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/goccy/go-yaml"
+
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
@@ -33,25 +34,6 @@ type StyleConfig struct {
 	Border      lipgloss.Border `yaml:"border"`
 	BorderColor string          `yaml:"border_color"`
 	Theme       GlamourTheme    `yaml:"theme"`
-	Preset      string          `yaml:"preset"`
-}
-
-func (s *Properties) Merge(other Properties) {
-	if other.Style.Layout.GetAlignHorizontal() != lipgloss.Left || other.Style.Layout.GetAlignVertical() != lipgloss.Top { // Not the default
-		s.Style.Layout = other.Style.Layout
-	}
-	if other.Style.Border != (lipgloss.Border{}) {
-		s.Style.Border = other.Style.Border
-	}
-	if other.Style.BorderColor != "" {
-		s.Style.BorderColor = other.Style.BorderColor
-	}
-	if other.Style.Theme.Name != "" {
-		s.Style.Theme = other.Style.Theme
-	}
-	if other.Transition != nil {
-		s.Transition = other.Transition
-	}
 }
 
 func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
@@ -60,7 +42,6 @@ func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
 		Border      string `yaml:"border"`
 		BorderColor string `yaml:"border_color"`
 		Theme       string `yaml:"theme"`
-		Preset      string `yaml:"preset"`
 	}{}
 
 	var err error
@@ -77,12 +58,11 @@ func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
 	s.Border = getBorder(aux.Border)
 	s.BorderColor = aux.BorderColor
 	s.Theme = getTheme(aux.Theme)
-	s.Preset = aux.Preset
 
 	return nil
 }
 
-func (s StyleConfig) ApplyStyle(width, height int) SlideStyle {
+func (s StyleConfig) Apply(width, height int) SlideStyle {
 	defaultBorderColor := "#9999CC" // Blueish
 	borderColor := defaultBorderColor
 
@@ -127,9 +107,9 @@ func getBorder(border string) lipgloss.Border {
 	case "outerHalfBlock":
 		return lipgloss.OuterHalfBlockBorder()
 	case "normal":
-		fallthrough
-	default:
 		return lipgloss.NormalBorder()
+	default:
+		return lipgloss.Border{}
 	}
 }
 
@@ -199,100 +179,55 @@ func getLayoutPosition(p string) (lipgloss.Position, error) {
 	}
 }
 
-func parseStyleConfig(layout, border, borderColor, theme, preset string) (*StyleConfig, error) {
-	config := &StyleConfig{}
-
-	var err error
-	if layout != "" {
-		config.Layout, err = getLayout(layout)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse layout: %w", err)
-		}
-	}
-
-	if border != "" {
-		config.Border = getBorder(border)
-	}
-
-	if borderColor != "" {
-		config.BorderColor = borderColor
-	}
-
-	if theme != "" {
-		config.Theme = getTheme(theme)
-	}
-
-	config.Preset = preset
-
-	return config, nil
-}
-
 func (p *Properties) UnmarshalYAML(bytes []byte) error {
 	aux := struct {
-		Style struct {
-			Layout      string `yaml:"layout"`
-			Border      string `yaml:"border"`
-			BorderColor string `yaml:"border_color"`
-			Theme       string `yaml:"theme"`
-			Preset      string `yaml:"preset"`
-		} `yaml:"style"`
-		Transition string `yaml:"transition"`
+		Style      StyleConfig `yaml:"style"`
+		Transition string      `yaml:"transition"`
+		Preset     string      `yaml:"preset"`
 	}{}
 
 	if err := yaml.Unmarshal(bytes, &aux); err != nil {
 		return err
 	}
 
-	v, err := Initialize(configPath)
-	if err != nil {
-		return fmt.Errorf("failed to initialize configuration: %w", err)
-	}
-
-	slideConfig, err := parseStyleConfig(
-		aux.Style.Layout,
-		aux.Style.Border,
-		aux.Style.BorderColor,
-		aux.Style.Theme,
-		aux.Style.Preset,
-	)
-
-	if err != nil {
-		return fmt.Errorf("failed to parse slide config: %w", err)
-	}
-
-	var transition transitions.Transition
-	if aux.Transition != "" {
-		transition = transitions.Get(aux.Transition, transitions.Fps)
+	if aux.Preset != "" {
+		preset, ok := GlobalConfig.Presets[aux.Preset]
+		if !ok {
+			return fmt.Errorf("preset %s does not exist", aux.Preset)
+		}
+		p.Style = preset.Style
+		p.Transition = preset.Transition
 	} else {
-		transition = nil
+		p.Style = aux.Style
+		p.Transition = transitions.Get(aux.Transition, transitions.Fps)
 	}
 
-	mergedProperties, err := MergeProperties(v, slideConfig, &transition)
-
-	if err != nil {
-		return fmt.Errorf("failed to merge configurations: %w", err)
+	if p.Style.Layout.GetAlignHorizontal() == lipgloss.Left ||
+		p.Style.Layout.GetAlignVertical() == lipgloss.Top { // The default
+		p.Style.Layout = GlobalConfig.Global.Style.Layout
 	}
-
-	p.Transition = mergedProperties.Transition
-	p.Style = mergedProperties.Style
+	if p.Style.Border == (lipgloss.Border{}) {
+		p.Style.Border = GlobalConfig.Global.Style.Border
+	}
+	if p.Style.BorderColor == "" {
+		p.Style.BorderColor = GlobalConfig.Global.Style.BorderColor
+	}
+	if p.Style.Theme.Name == "" {
+		p.Style.Theme = GlobalConfig.Global.Style.Theme
+	}
+	if p.Transition == nil {
+		p.Transition = GlobalConfig.Global.Transition
+	}
 
 	return nil
 }
 
 func NewProperties(properties string) (Properties, error) {
 	if properties == "" {
-		v, err := Initialize(configPath)
-		if err != nil {
-			return Properties{}, fmt.Errorf("failed to initialize configuration: %w", err)
-		}
-
-		var transition transitions.Transition = nil
-		prop, err := MergeProperties(v, &StyleConfig{}, &transition)
-		if err != nil {
-			return Properties{}, err
-		}
-
-		return *prop, nil
+		return Properties{
+			Style:      GlobalConfig.Global.Style,
+			Transition: GlobalConfig.Global.Transition,
+		}, nil
 	}
 
 	var p Properties
