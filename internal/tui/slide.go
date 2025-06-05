@@ -6,7 +6,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/museslabs/kyma/internal/config"
+	"github.com/museslabs/kyma/internal/process"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
@@ -51,7 +53,10 @@ func (s Slide) view() string {
 		themeName = s.Style.Theme.Name
 	}
 
-	out, err := glamour.Render(s.Data, themeName)
+	p := process.NewImageProcessor()
+	data, _ := p.Pre(s.Data)
+
+	out, err := glamour.Render(data, themeName)
 	if err != nil {
 		b.WriteString("\n\n" + lipgloss.NewStyle().
 			Foreground(lipgloss.Color("9")). // Red
@@ -77,7 +82,9 @@ func (s Slide) view() string {
 	} else {
 		b.WriteString(s.Style.LipGlossStyle.Render(out))
 	}
-	return b.String()
+
+	out, _ = p.Post(b.String())
+	return out
 }
 
 func (s *Slide) First() *Slide {
