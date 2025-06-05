@@ -6,7 +6,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/museslabs/kyma/internal/config"
+	"github.com/museslabs/kyma/internal/process"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
@@ -58,8 +60,11 @@ func (s Slide) view() string {
 		themeName = s.Style.Theme.Name
 	}
 
+	p := process.NewImageProcessor()
+	data, _ := p.Pre(s.Data)
+
 	// Pre-process markdown to handle custom highlighting syntax
-	out, err := processMarkdownWithHighlighting(s.Data, themeName)
+	out, err := processMarkdownWithHighlighting(data, themeName)
 	if err != nil {
 		// If preprocessing fails, fall back to regular Glamour rendering
 		out, err = glamour.Render(s.Data, themeName)
@@ -89,7 +94,9 @@ func (s Slide) view() string {
 	} else {
 		b.WriteString(s.Style.LipGlossStyle.Render(out))
 	}
-	return b.String()
+
+	out, _ = p.Post(b.String())
+	return out
 }
 
 func (s *Slide) First() *Slide {
