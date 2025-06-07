@@ -17,6 +17,7 @@ type Slide struct {
 	Style            config.SlideStyle
 	ActiveTransition transitions.Transition
 	Properties       config.Properties
+	Title            string
 
 	preRenderedFrame string
 }
