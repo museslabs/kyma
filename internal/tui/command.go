@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/museslabs/kyma/internal/config"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 	itemStyle  = lipgloss.NewStyle().
 			PaddingLeft(2)
 	selectedItemStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#9999CC"))
+				Foreground(lipgloss.Color(config.DefaultBorderColor))
 	paginationStyle = list.DefaultStyles().PaginationStyle.
 			PaddingLeft(2)
 	helpStyle = list.DefaultStyles().HelpStyle.
@@ -183,7 +184,7 @@ func (m Command) Show(slideView string, width, height int) string {
 		Width(90).
 		Height(15).
 		Padding(0, 4, 0, 4).
-		BorderForeground(lipgloss.Color("#9999CC")).
+		BorderForeground(lipgloss.Color(config.DefaultBorderColor)).
 		Render(view)
 
 	_, modalWidth := getLines(modalContent)
