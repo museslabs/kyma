@@ -108,7 +108,7 @@ func NewCommand(rootSlide *Slide) Command {
 		key.WithHelp("f", "filter"),
 	)
 
-	return Command{list: l}
+	return Command{list: l, showing: false}
 }
 
 func (m Command) Init() tea.Cmd {
