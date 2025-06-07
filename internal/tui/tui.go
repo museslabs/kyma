@@ -17,6 +17,7 @@ type keyMap struct {
 	Top     key.Binding
 	Bottom  key.Binding
 	Command key.Binding
+	GoTo    key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -52,6 +53,10 @@ var keys = keyMap{
 		key.WithKeys("/", "p"),
 		key.WithHelp("/, p", "command palette"),
 	),
+	GoTo: key.NewBinding(
+		key.WithKeys("g", ":"),
+		key.WithHelp("g, :", "go to slide"),
+	),
 }
 
 func style(width, height int, styleConfig config.StyleConfig) config.SlideStyle {
@@ -66,6 +71,7 @@ type model struct {
 	keys      keyMap
 	help      help.Model
 	command   *Command
+	goTo      *GoTo
 	rootSlide *Slide
 }
 
@@ -92,6 +98,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.slide = command.Choice()
 			}
 			m.command = nil
+			return m, nil
+		}
+		return m, cmd
+	}
+
+	if m.goTo != nil && m.goTo.IsShowing() {
+		goTo, cmd := m.goTo.Update(msg)
+		m.goTo = &goTo
+
+		if goTo.Quitting() {
+			if choice := goTo.Choice(); choice > 0 {
+				// Find the slide at the specified position
+				slide := m.rootSlide
+				for i := 1; i < choice && slide != nil; i++ {
+					slide = slide.Next
+				}
+				if slide != nil {
+					m.slide = slide
+				}
+			}
+			m.goTo = nil
 			return m, nil
 		}
 		return m, cmd
@@ -133,6 +160,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			command := NewCommand(m.rootSlide)
 			command = command.SetShowing(true)
 			m.command = &command
+			return m, nil
+		} else if key.Matches(msg, m.keys.GoTo) {
+			// Count total slides
+			count := 0
+			for slide := m.rootSlide; slide != nil; slide = slide.Next {
+				count++
+			}
+			goTo := NewGoTo(count)
+			goTo = goTo.SetShowing(true)
+			m.goTo = &goTo
 			return m, nil
 		} else if key.Matches(msg, m.keys.Next) {
 			if m.slide.Next == nil || m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating() {
@@ -183,6 +220,10 @@ func (m model) View() string {
 
 	if m.command != nil && m.command.IsShowing() {
 		return m.command.Show(slideView, m.width, m.height)
+	}
+
+	if m.goTo != nil && m.goTo.IsShowing() {
+		return m.goTo.Show(slideView, m.width, m.height)
 	}
 
 	return slideView
