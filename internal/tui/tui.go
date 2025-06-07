@@ -49,8 +49,8 @@ var keys = keyMap{
 		key.WithHelp("end, shift+down, $", "bottom"),
 	),
 	Command: key.NewBinding(
-		key.WithKeys("?", "p"),
-		key.WithHelp("ctrl+p, p", "command palette"),
+		key.WithKeys("/", "p"),
+		key.WithHelp("/, p", "command palette"),
 	),
 }
 
