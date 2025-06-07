@@ -11,11 +11,12 @@ import (
 )
 
 type keyMap struct {
-	Quit   key.Binding
-	Next   key.Binding
-	Prev   key.Binding
-	Top    key.Binding
-	Bottom key.Binding
+	Quit    key.Binding
+	Next    key.Binding
+	Prev    key.Binding
+	Top     key.Binding
+	Bottom  key.Binding
+	Command key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -47,6 +48,10 @@ var keys = keyMap{
 		key.WithKeys("end", "shift+down", "$"),
 		key.WithHelp("end, shift+down, $", "bottom"),
 	),
+	Command: key.NewBinding(
+		key.WithKeys("?", "p"),
+		key.WithHelp("ctrl+p, p", "command palette"),
+	),
 }
 
 func style(width, height int, styleConfig config.StyleConfig) config.SlideStyle {
@@ -57,16 +62,19 @@ type model struct {
 	width  int
 	height int
 
-	slide *Slide
-	keys  keyMap
-	help  help.Model
+	slide     *Slide
+	keys      keyMap
+	help      help.Model
+	command   *Command
+	rootSlide *Slide
 }
 
 func New(rootSlide *Slide) model {
 	return model{
-		slide: rootSlide,
-		keys:  keys,
-		help:  help.New(),
+		slide:     rootSlide,
+		keys:      keys,
+		help:      help.New(),
+		rootSlide: rootSlide,
 	}
 }
 
@@ -75,6 +83,20 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.command != nil && m.command.IsShowing() {
+		command, cmd := m.command.Update(msg)
+		m.command = &command
+
+		if command.quitting || command.Choice() != nil {
+			if command.Choice() != nil {
+				m.slide = command.Choice()
+			}
+			m.command = nil
+			return m, nil
+		}
+		return m, cmd
+	}
+
 	switch msg := msg.(type) {
 	case UpdateSlidesMsg:
 		// Find current position in the slide list
@@ -85,6 +107,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Update root and navigate to the same position in the new list
 		m.slide = msg.NewRoot
+		m.rootSlide = msg.NewRoot
 		for i := 0; i < currentPosition && m.slide != nil; i++ {
 			m.slide = m.slide.Next
 		}
@@ -106,6 +129,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		if key.Matches(msg, m.keys.Quit) {
 			return m, tea.Quit
+		} else if key.Matches(msg, m.keys.Command) {
+			palette := NewCommand(m.rootSlide)
+			palette = palette.SetShowing(true)
+			m.command = &palette
+			return m, nil
 		} else if key.Matches(msg, m.keys.Next) {
 			if m.slide.Next == nil || m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating() {
 				return m, nil
@@ -145,11 +173,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	m.slide.Style = style(m.width, m.height, m.slide.Properties.Style)
 
-	return lipgloss.Place(
+	slideView := lipgloss.Place(
 		m.width,
 		m.height,
 		lipgloss.Center,
 		lipgloss.Center,
 		m.slide.View(),
 	)
+
+	if m.command != nil && m.command.IsShowing() {
+		return m.command.Show(slideView, m.width, m.height)
+	}
+
+	return slideView
 }
