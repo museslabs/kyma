@@ -130,9 +130,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if key.Matches(msg, m.keys.Quit) {
 			return m, tea.Quit
 		} else if key.Matches(msg, m.keys.Command) {
-			palette := NewCommand(m.rootSlide)
-			palette = palette.SetShowing(true)
-			m.command = &palette
+			command := NewCommand(m.rootSlide)
+			command = command.SetShowing(true)
+			m.command = &command
+			return m, nil
 			return m, nil
 		} else if key.Matches(msg, m.keys.Next) {
 			if m.slide.Next == nil || m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating() {
