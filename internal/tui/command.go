@@ -61,6 +61,7 @@ type Command struct {
 	list     list.Model
 	choice   *Slide
 	quitting bool
+	showing  bool
 }
 
 func NewCommand(rootSlide *Slide) Command {
@@ -175,8 +176,36 @@ func (m Command) View() string {
 	return "\n" + content
 }
 
+func (m Command) Show(slideView string, width, height int) string {
+	view := m.View()
+	modalContent := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		Width(90).
+		Height(15).
+		Padding(0, 4, 0, 4).
+		BorderForeground(lipgloss.Color("#9999CC")).
+		Render(view)
+
+	_, modalWidth := getLines(modalContent)
+	modalHeight := strings.Count(modalContent, "\n") + 1
+
+	centerX := (width - modalWidth) / 2
+	centerY := (height - modalHeight) / 2
+
+	return placeOverlay(centerX, centerY, modalContent, slideView)
+}
+
 func (m Command) Choice() *Slide {
 	return m.choice
+}
+
+func (m Command) IsShowing() bool {
+	return m.showing
+}
+
+func (m Command) SetShowing(showing bool) Command {
+	m.showing = showing
+	return m
 }
 
 type OpenCommandMsg struct{}
