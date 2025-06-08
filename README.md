@@ -14,6 +14,8 @@ A terminal-based presentation tool that creates beautiful presentations from mar
 
 ## Features
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e4e6d3a8dc2a4614b40404f64d1d6e5f)](https://app.codacy.com/gh/museslabs/kyma?utm_source=github.com&utm_medium=referral&utm_content=museslabs/kyma&utm_campaign=Badge_Grade)
+
 - **Markdown-based**: Write your presentations in simple markdown syntax
 - **Rich rendering**: Beautiful terminal rendering using Glamour markdown renderer
 - **Smooth transitions**: Multiple animated transition effects between slides
