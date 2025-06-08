@@ -134,7 +134,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			command = command.SetShowing(true)
 			m.command = &command
 			return m, nil
-			return m, nil
 		} else if key.Matches(msg, m.keys.Next) {
 			if m.slide.Next == nil || m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating() {
 				return m, nil
