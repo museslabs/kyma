@@ -11,6 +11,13 @@ A terminal-based presentation tool that creates beautiful presentations from mar
 <div align="center">
   <img src="slideshow.gif" alt="slideshow" width=80%>
 </div>
+&nbsp;
+<div align="center">
+  <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/jesseduffield/lazygit">
+  <img alt="Codacy Badge" src="https://api.codacy.com/project/badge/Grade/e4e6d3a8dc2a4614b40404f64d1d6e5f">
+  <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/museslabs/kyma/go.yml">
+  <img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/museslabs/kyma">
+</div>
 
 ## Features
 
@@ -71,36 +78,47 @@ Kyma presentations use a simple format with slides separated by `----` and optio
 
 ```markdown
 # First Slide
+
 This is the content of the first slide
 
-----
 ---
-transition: swipeLeft
+
 ---
+
+## transition: swipeLeft
 
 # Second Slide
+
 This slide will appear with a swipe left transition
 
-----
 ---
+
+---
+
 transition: slideUp
 style:
-  border: rounded
-  border_color: "#9999CC"
-  layout: center
-  theme: dracula
+border: rounded
+border_color: "#9999CC"
+layout: center
+theme: dracula
+
 ---
 
 # Third Slide
+
 This slide has custom styling with Dracula theme
 
-----
 ---
+
+---
+
 style:
-  theme: /path/to/custom-theme.json
+theme: /path/to/custom-theme.json
+
 ---
 
 # Fourth Slide
+
 This slide uses a custom JSON theme file
 ```
 
@@ -119,10 +137,10 @@ You can customize each slide's appearance using the style configuration:
 
 ```yaml
 style:
-  border: rounded          # Border style: normal, rounded, double, thick, hidden, block
-  border_color: "#FF0000"  # Hex color for border (or "default" for theme-based color)
-  layout: center           # Layout positioning: center, left, right, top, bottom
-  theme: dracula           # Theme name or path to custom JSON theme file
+  border: rounded # Border style: normal, rounded, double, thick, hidden, block
+  border_color: "#FF0000" # Hex color for border (or "default" for theme-based color)
+  layout: center # Layout positioning: center, left, right, top, bottom
+  theme: dracula # Theme name or path to custom JSON theme file
 ```
 
 Layout can also be specified as a combination: `layout: center,right`
@@ -231,6 +249,6 @@ All contributions are welcome! If you're planning a significant change or you're
 - Add support for more style options like text color and background color
 - ~~Allow choosing from any glamour themes~~ ✅ **Done!**
 - ~~Support for custom JSON theme files~~ ✅ **Done!**
-- Create grid-based slide layouts with transitions for each pane  
+- Create grid-based slide layouts with transitions for each pane
 - Add more transition effects
 - Support image rendering in terminals (e.g., via the Kitty protocol)
