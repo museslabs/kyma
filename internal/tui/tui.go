@@ -18,6 +18,7 @@ type keyMap struct {
 	Bottom  key.Binding
 	Command key.Binding
 	GoTo    key.Binding
+	Jump    key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -57,6 +58,10 @@ var keys = keyMap{
 		key.WithKeys("g", ":"),
 		key.WithHelp("g, :", "go to slide"),
 	),
+	Jump: key.NewBinding(
+		key.WithKeys("1", "2", "3", "4", "5", "6", "7", "8", "9"),
+		key.WithHelp("1-9", "jump slides"),
+	),
 }
 
 func style(width, height int, styleConfig config.StyleConfig) config.SlideStyle {
@@ -72,6 +77,7 @@ type model struct {
 	help      help.Model
 	command   *Command
 	goTo      *GoTo
+	jump      *Jump
 	rootSlide *Slide
 }
 
@@ -124,6 +130,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 
+	if m.jump != nil && m.jump.IsShowing() {
+		jump, cmd := m.jump.Update(msg)
+		m.jump = &jump
+
+		if jump.Quitting() {
+			if steps := jump.JumpSteps(); steps != 0 {
+				if steps > 0 {
+					// Jump forward
+					for i := 0; i < steps && m.slide.Next != nil; i++ {
+						m.slide = m.slide.Next
+					}
+				} else {
+					// Jump backward
+					for i := 0; i < -steps && m.slide.Prev != nil; i++ {
+						m.slide = m.slide.Prev
+					}
+				}
+			}
+			m.jump = nil
+			return m, nil
+		}
+		return m, cmd
+	}
+
 	switch msg := msg.(type) {
 	case UpdateSlidesMsg:
 		// Find current position in the slide list
@@ -171,6 +201,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			goTo = goTo.SetShowing(true)
 			m.goTo = &goTo
 			return m, nil
+		} else if key.Matches(msg, m.keys.Jump) {
+			jump := NewJump()
+			jump = jump.SetShowing(true)
+			m.jump = &jump
+			jump, cmd := jump.Update(msg)
+			m.jump = &jump
+			return m, cmd
 		} else if key.Matches(msg, m.keys.Next) {
 			if m.slide.Next == nil || m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating() {
 				return m, nil
@@ -224,6 +261,10 @@ func (m model) View() string {
 
 	if m.goTo != nil && m.goTo.IsShowing() {
 		return m.goTo.Show(slideView, m.width, m.height)
+	}
+
+	if m.jump != nil && m.jump.IsShowing() {
+		return m.jump.Show(slideView, m.width, m.height)
 	}
 
 	return slideView
