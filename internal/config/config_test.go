@@ -33,7 +33,7 @@ presets:
 		t.Fatalf("Failed to write test config: %v", err)
 	}
 
-	defaultConfigDir := filepath.Join(tmpDir, ".config")
+	defaultConfigDir := filepath.Join(tmpDir, ".config", "kyma")
 	if err := os.MkdirAll(defaultConfigDir, 0755); err != nil {
 		t.Fatalf("Failed to create .config directory: %v", err)
 	}
@@ -166,7 +166,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 		t.Fatalf("createDefaultConfig() error = %v", err)
 	}
 
-	configFile := filepath.Join(tmpDir, ".config", "kyma.yaml")
+	configFile := filepath.Join(tmpDir, ".config", "kyma", "kyma.yaml")
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		t.Errorf("Default config file was not created")
 	}
