@@ -40,6 +40,14 @@ type itemDelegate struct{}
 func (d itemDelegate) Height() int                             { return 1 }
 func (d itemDelegate) Spacing() int                            { return 0 }
 func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
+
+func renderItem(str string, isSelected bool) string {
+	if isSelected {
+		return selectedItemStyle.Render("> " + str)
+	}
+	return itemStyle.Render(str)
+}
+
 func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
 	i, ok := listItem.(SlideItem)
 	if !ok {
@@ -47,15 +55,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	}
 
 	str := fmt.Sprintf("%d. %s", i.number, i.title)
-
-	fn := itemStyle.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return selectedItemStyle.Render("> " + strings.Join(s, " "))
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
+	fmt.Fprint(w, renderItem(str, index == m.Index()))
 }
 
 type Command struct {
