@@ -17,12 +17,12 @@ import (
 )
 
 var (
-	watch      bool
+	static     bool
 	configPath string
 )
 
 func init() {
-	rootCmd.Flags().BoolVarP(&watch, "watch", "w", false, "Watch for changes in the input file")
+	rootCmd.Flags().BoolVarP(&static, "static", "s", false, "Disable live reload (watch mode is enabled by default)")
 	rootCmd.Flags().StringVarP(&configPath, "config", "c", "", "Path to config file")
 	rootCmd.AddCommand(versionCmd)
 }
@@ -38,6 +38,9 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("expected markdown file got: %v", args[0])
 		}
 		return nil
+	},
+	CompletionOptions: cobra.CompletionOptions{
+		DisableDefaultCmd: true,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := config.Load(configPath); err != nil {
@@ -58,7 +61,7 @@ var rootCmd = &cobra.Command{
 
 		p := tea.NewProgram(tui.New(root), tea.WithAltScreen(), tea.WithMouseAllMotion())
 
-		if watch {
+		if !static {
 			watcher, err := fsnotify.NewWatcher()
 			if err != nil {
 				p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
