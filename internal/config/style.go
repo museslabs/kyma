@@ -23,7 +23,7 @@ const (
 	chromaStyleTheme   = "kyma"
 )
 
-var chromaMutex = sync.Mutex{}
+var chromaMutex = sync.RWMutex{}
 
 type Properties struct {
 	Title      string                 `yaml:"title"`
@@ -317,17 +317,25 @@ func ChromaStyle(style ansi.StylePrimitive) string {
 func GetChromaStyle(themeName string) *chroma.Style {
 	customThemeName := chromaStyleTheme + "-" + themeName
 
-	chromaMutex.Lock()
-	defer chromaMutex.Unlock()
+	switch themeName {
+	case "dracula":
+		return chromaStyles.Get("dracula")
+	case "tokyo-night", "tokyonight":
+		return chromaStyles.Get("tokyo-night")
+	}
 
+	chromaMutex.RLock()
 	if chromaStyle, ok := chromaStyles.Registry[customThemeName]; ok {
+		chromaMutex.RUnlock()
 		return chromaStyle
 	}
+	chromaMutex.RUnlock()
 
 	styleConfig := getTheme(themeName)
 	style := styleConfig.Style
+
 	if style.CodeBlock.Chroma != nil {
-		style := chroma.MustNewStyle(customThemeName,
+		newStyle := chroma.MustNewStyle(customThemeName,
 			chroma.StyleEntries{
 				chroma.Text:                ChromaStyle(style.CodeBlock.Chroma.Text),
 				chroma.Error:               ChromaStyle(style.CodeBlock.Chroma.Error),
@@ -361,20 +369,17 @@ func GetChromaStyle(themeName string) *chroma.Style {
 				chroma.GenericSubheading:   ChromaStyle(style.CodeBlock.Chroma.GenericSubheading),
 				chroma.Background:          ChromaStyle(style.CodeBlock.Chroma.Background),
 			})
-		chromaStyles.Register(style)
-		return style
+
+		chromaMutex.Lock()
+
+		if existingStyle, ok := chromaStyles.Registry[customThemeName]; ok {
+			chromaMutex.Unlock()
+			return existingStyle
+		}
+		chromaStyles.Register(newStyle)
+		chromaMutex.Unlock()
+		return newStyle
 	}
 
-	switch themeName {
-	case "dracula":
-		return chromaStyles.Get("dracula")
-	case "dark":
-		return chromaStyles.Get("github-dark")
-	case "light":
-		return chromaStyles.Get("github")
-	case "tokyo-night", "tokyonight":
-		return chromaStyles.Get("tokyo-night")
-	default:
-		return chromaStyles.Fallback
-	}
+	return chromaStyles.Fallback
 }
