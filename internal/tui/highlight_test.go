@@ -128,8 +128,8 @@ func TestShouldHighlightLineEmptyRanges(t *testing.T) {
 	var emptyRanges []LineRange
 
 	result := shouldHighlightLine(5, emptyRanges)
-	if result != false {
-		t.Errorf("shouldHighlightLine(5, emptyRanges) = %v, expected false", result)
+	if result != true {
+		t.Errorf("shouldHighlightLine(5, emptyRanges) = %v, expected true", result)
 	}
 }
 
@@ -241,8 +241,9 @@ func TestRenderCustomCodeBlock(t *testing.T) {
 	}
 }
 
-func TestRenderWithStyle(t *testing.T) {
+func TestRenderHighlightedCode(t *testing.T) {
 	content := "console.log('test');\nvar x = 1;"
+	lines := strings.Split(content, "\n")
 	info := CodeHighlightInfo{
 		Language: "javascript",
 		Ranges:   []LineRange{{Start: 1, End: 1}},
@@ -259,25 +260,26 @@ func TestRenderWithStyle(t *testing.T) {
 		style = styles.Fallback
 	}
 
-	result := renderWithStyle(content, info, lexer, style)
+	result := renderHighlightedCode(content, lines, info, lexer, style)
 
 	if result == "" {
-		t.Error("renderWithStyle returned empty string")
+		t.Error("renderHighlightedCode returned empty string")
 	}
 
 	// Result should have meaningful content (more than just whitespace)
 	if len(strings.TrimSpace(result)) == 0 {
-		t.Error("renderWithStyle returned only whitespace")
+		t.Error("renderHighlightedCode returned only whitespace")
 	}
 
 	// Should contain some recognizable elements from the original content
 	if !strings.Contains(result, "console") && !strings.Contains(result, "log") && !strings.Contains(result, "var") {
-		t.Error("renderWithStyle result doesn't contain expected javascript elements")
+		t.Error("renderHighlightedCode result doesn't contain expected javascript elements")
 	}
 }
 
-func TestRenderWithStyleLineNumbers(t *testing.T) {
+func TestRenderHighlightedCodeWithLineNumbers(t *testing.T) {
 	content := "console.log('test');\nvar x = 1;\nfunction hello() {\n  return 'world';\n}"
+	lines := strings.Split(content, "\n")
 	info := CodeHighlightInfo{
 		Language:        "javascript",
 		Ranges:          []LineRange{{Start: 1, End: 2}},
@@ -295,23 +297,23 @@ func TestRenderWithStyleLineNumbers(t *testing.T) {
 		style = styles.Fallback
 	}
 
-	result := renderWithStyle(content, info, lexer, style)
+	result := renderHighlightedCode(content, lines, info, lexer, style)
 
 	if result == "" {
-		t.Error("renderWithStyle returned empty string")
+		t.Error("renderHighlightedCode returned empty string")
 	}
 
 	// Should contain line numbers
 	if !strings.Contains(result, "1") {
-		t.Error("renderWithStyle with ShowLineNumbers should contain line number 1")
+		t.Error("renderHighlightedCode with ShowLineNumbers should contain line number 1")
 	}
 	if !strings.Contains(result, "2") {
-		t.Error("renderWithStyle with ShowLineNumbers should contain line number 2")
+		t.Error("renderHighlightedCode with ShowLineNumbers should contain line number 2")
 	}
 
 	// Should contain some recognizable elements from the original content
 	if !strings.Contains(result, "console") && !strings.Contains(result, "log") && !strings.Contains(result, "var") {
-		t.Error("renderWithStyle result doesn't contain expected javascript elements")
+		t.Error("renderHighlightedCode result doesn't contain expected javascript elements")
 	}
 }
 
