@@ -58,12 +58,17 @@ func (s Slide) view() string {
 		themeName = s.Style.Theme.Name
 	}
 
-	out, err := glamour.Render(s.Data, themeName)
+	// Pre-process markdown to handle custom highlighting syntax
+	out, err := processMarkdownWithHighlighting(s.Data, themeName)
 	if err != nil {
-		b.WriteString("\n\n" + lipgloss.NewStyle().
-			Foreground(lipgloss.Color("9")). // Red
-			Render("Error: "+err.Error()))
-		return b.String()
+		// If preprocessing fails, fall back to regular Glamour rendering
+		out, err = glamour.Render(s.Data, themeName)
+		if err != nil {
+			b.WriteString("\n\n" + lipgloss.NewStyle().
+				Foreground(lipgloss.Color("9")). // Red
+				Render("Error: "+err.Error()))
+			return b.String()
+		}
 	}
 
 	if s.ActiveTransition != nil && s.ActiveTransition.Animating() {
