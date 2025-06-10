@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/alecthomas/chroma/v2"
 	chromaStyles "github.com/alecthomas/chroma/v2/styles"
@@ -22,8 +21,6 @@ const (
 	DefaultBorderColor = "#9999CC"
 	chromaStyleTheme   = "kyma"
 )
-
-var chromaMutex = sync.RWMutex{}
 
 type Properties struct {
 	Title      string                 `yaml:"title"`
@@ -317,19 +314,9 @@ func ChromaStyle(style ansi.StylePrimitive) string {
 func GetChromaStyle(themeName string) *chroma.Style {
 	customThemeName := chromaStyleTheme + "-" + themeName
 
-	switch themeName {
-	case "dracula":
-		return chromaStyles.Get("dracula")
-	case "tokyo-night", "tokyonight":
-		return chromaStyles.Get("tokyo-night")
-	}
-
-	chromaMutex.RLock()
 	if chromaStyle, ok := chromaStyles.Registry[customThemeName]; ok {
-		chromaMutex.RUnlock()
 		return chromaStyle
 	}
-	chromaMutex.RUnlock()
 
 	styleConfig := getTheme(themeName)
 	style := styleConfig.Style
@@ -370,16 +357,19 @@ func GetChromaStyle(themeName string) *chroma.Style {
 				chroma.Background:          ChromaStyle(style.CodeBlock.Chroma.Background),
 			})
 
-		chromaMutex.Lock()
-
 		if existingStyle, ok := chromaStyles.Registry[customThemeName]; ok {
-			chromaMutex.Unlock()
 			return existingStyle
 		}
 		chromaStyles.Register(newStyle)
-		chromaMutex.Unlock()
 		return newStyle
 	}
 
-	return chromaStyles.Fallback
+	switch themeName {
+	case "dracula":
+		return chromaStyles.Get("dracula")
+	case "tokyo-night", "tokyonight":
+		return chromaStyles.Get("tokyo-night")
+	default:
+		return chromaStyles.Fallback
+	}
 }
