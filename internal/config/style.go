@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
+	"github.com/alecthomas/chroma/v2"
+	chromaStyles "github.com/alecthomas/chroma/v2/styles"
 	"github.com/charmbracelet/glamour/ansi"
-	"github.com/charmbracelet/glamour/styles"
+	glamourStyles "github.com/charmbracelet/glamour/styles"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/goccy/go-yaml"
@@ -17,7 +20,10 @@ import (
 
 const (
 	DefaultBorderColor = "#9999CC"
+	chromaStyleTheme   = "kyma"
 )
+
+var chromaMutex = sync.Mutex{}
 
 type Properties struct {
 	Title      string                 `yaml:"title"`
@@ -173,16 +179,16 @@ func getLayout(layout string) (lipgloss.Style, error) {
 }
 
 func getTheme(theme string) GlamourTheme {
-	style, ok := styles.DefaultStyles[theme]
+	style, ok := glamourStyles.DefaultStyles[theme]
 	if !ok {
 		jsonBytes, err := os.ReadFile(theme)
 		if err != nil {
-			return GlamourTheme{Style: styles.DarkStyleConfig, Name: "dark"}
+			return GlamourTheme{Style: glamourStyles.DarkStyleConfig, Name: "dark"}
 		}
 
 		var customStyle ansi.StyleConfig
 		if err := json.Unmarshal(jsonBytes, &customStyle); err != nil {
-			return GlamourTheme{Style: styles.DarkStyleConfig, Name: "dark"}
+			return GlamourTheme{Style: glamourStyles.DarkStyleConfig, Name: "dark"}
 		}
 
 		return GlamourTheme{Style: customStyle, Name: theme}
@@ -268,4 +274,103 @@ func NewProperties(properties string) (Properties, error) {
 	}
 
 	return p, nil
+}
+
+func ChromaStyle(style ansi.StylePrimitive) string {
+	var s string
+
+	if style.Color != nil {
+		s = *style.Color
+	}
+	if style.BackgroundColor != nil {
+		if s != "" {
+			s += " "
+		}
+		s += "bg:" + *style.BackgroundColor
+	}
+	if style.Italic != nil && *style.Italic {
+		if s != "" {
+			s += " "
+		}
+		s += "italic"
+	}
+	if style.Bold != nil && *style.Bold {
+		if s != "" {
+			s += " "
+		}
+		s += "bold"
+	}
+	if style.Underline != nil && *style.Underline {
+		if s != "" {
+			s += " "
+		}
+		s += "underline"
+	}
+
+	return s
+}
+
+func GetChromaStyle(themeName string) *chroma.Style {
+	customThemeName := chromaStyleTheme + "-" + themeName
+
+	chromaMutex.Lock()
+	defer chromaMutex.Unlock()
+
+	if style, ok := chromaStyles.Registry[customThemeName]; ok {
+		return style
+	}
+
+	styleConfig := getTheme(themeName)
+	style := styleConfig.Style
+	if style.CodeBlock.Chroma != nil {
+		style := chroma.MustNewStyle(customThemeName,
+			chroma.StyleEntries{
+				chroma.Text:                ChromaStyle(style.CodeBlock.Chroma.Text),
+				chroma.Error:               ChromaStyle(style.CodeBlock.Chroma.Error),
+				chroma.Comment:             ChromaStyle(style.CodeBlock.Chroma.Comment),
+				chroma.CommentPreproc:      ChromaStyle(style.CodeBlock.Chroma.CommentPreproc),
+				chroma.Keyword:             ChromaStyle(style.CodeBlock.Chroma.Keyword),
+				chroma.KeywordReserved:     ChromaStyle(style.CodeBlock.Chroma.KeywordReserved),
+				chroma.KeywordNamespace:    ChromaStyle(style.CodeBlock.Chroma.KeywordNamespace),
+				chroma.KeywordType:         ChromaStyle(style.CodeBlock.Chroma.KeywordType),
+				chroma.Operator:            ChromaStyle(style.CodeBlock.Chroma.Operator),
+				chroma.Punctuation:         ChromaStyle(style.CodeBlock.Chroma.Punctuation),
+				chroma.Name:                ChromaStyle(style.CodeBlock.Chroma.Name),
+				chroma.NameBuiltin:         ChromaStyle(style.CodeBlock.Chroma.NameBuiltin),
+				chroma.NameTag:             ChromaStyle(style.CodeBlock.Chroma.NameTag),
+				chroma.NameAttribute:       ChromaStyle(style.CodeBlock.Chroma.NameAttribute),
+				chroma.NameClass:           ChromaStyle(style.CodeBlock.Chroma.NameClass),
+				chroma.NameConstant:        ChromaStyle(style.CodeBlock.Chroma.NameConstant),
+				chroma.NameDecorator:       ChromaStyle(style.CodeBlock.Chroma.NameDecorator),
+				chroma.NameException:       ChromaStyle(style.CodeBlock.Chroma.NameException),
+				chroma.NameFunction:        ChromaStyle(style.CodeBlock.Chroma.NameFunction),
+				chroma.NameOther:           ChromaStyle(style.CodeBlock.Chroma.NameOther),
+				chroma.Literal:             ChromaStyle(style.CodeBlock.Chroma.Literal),
+				chroma.LiteralNumber:       ChromaStyle(style.CodeBlock.Chroma.LiteralNumber),
+				chroma.LiteralDate:         ChromaStyle(style.CodeBlock.Chroma.LiteralDate),
+				chroma.LiteralString:       ChromaStyle(style.CodeBlock.Chroma.LiteralString),
+				chroma.LiteralStringEscape: ChromaStyle(style.CodeBlock.Chroma.LiteralStringEscape),
+				chroma.GenericDeleted:      ChromaStyle(style.CodeBlock.Chroma.GenericDeleted),
+				chroma.GenericEmph:         ChromaStyle(style.CodeBlock.Chroma.GenericEmph),
+				chroma.GenericInserted:     ChromaStyle(style.CodeBlock.Chroma.GenericInserted),
+				chroma.GenericStrong:       ChromaStyle(style.CodeBlock.Chroma.GenericStrong),
+				chroma.GenericSubheading:   ChromaStyle(style.CodeBlock.Chroma.GenericSubheading),
+				chroma.Background:          ChromaStyle(style.CodeBlock.Chroma.Background),
+			})
+		chromaStyles.Register(style)
+		return style
+	}
+
+	switch themeName {
+	case "dracula":
+		return chromaStyles.Get("dracula")
+	case "dark":
+		return chromaStyles.Get("github-dark")
+	case "light":
+		return chromaStyles.Get("github")
+	case "tokyo-night", "tokyonight":
+		return chromaStyles.Get("tokyo-night")
+	default:
+		return chromaStyles.Fallback
+	}
 }
