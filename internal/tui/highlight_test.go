@@ -166,6 +166,26 @@ func TestRenderCustomCodeBlock(t *testing.T) {
 			},
 			themeName: "dark",
 		},
+		{
+			name:    "code with line numbers",
+			content: "console.log('hello');\nconsole.log('world');\nvar x = 1;",
+			info: CodeHighlightInfo{
+				Language:        "javascript",
+				Ranges:          []LineRange{{Start: 1, End: 1}},
+				ShowLineNumbers: true,
+			},
+			themeName: "dark",
+		},
+		{
+			name:    "code with only line numbers (no highlighting)",
+			content: "def hello():\n    print('hello')\n    return True",
+			info: CodeHighlightInfo{
+				Language:        "python",
+				Ranges:          nil,
+				ShowLineNumbers: true,
+			},
+			themeName: "dark",
+		},
 	}
 
 	for _, tt := range tests {
@@ -180,6 +200,13 @@ func TestRenderCustomCodeBlock(t *testing.T) {
 			// Result should have meaningful content (more than just whitespace)
 			if len(strings.TrimSpace(result)) == 0 {
 				t.Error("renderCustomCodeBlock returned only whitespace")
+			}
+
+			// Check for line numbers if requested
+			if tt.info.ShowLineNumbers {
+				if !strings.Contains(result, "1") {
+					t.Error("renderCustomCodeBlock with ShowLineNumbers should contain line number 1")
+				}
 			}
 
 			// For known languages, check that it contains some recognizable elements
@@ -231,6 +258,45 @@ func TestRenderWithStyle(t *testing.T) {
 	}
 }
 
+func TestRenderWithStyleLineNumbers(t *testing.T) {
+	content := "console.log('test');\nvar x = 1;\nfunction hello() {\n  return 'world';\n}"
+	info := CodeHighlightInfo{
+		Language:        "javascript",
+		Ranges:          []LineRange{{Start: 1, End: 2}},
+		ShowLineNumbers: true,
+	}
+
+	lexer := lexers.Get("javascript")
+	if lexer == nil {
+		lexer = lexers.Fallback
+	}
+	lexer = chroma.Coalesce(lexer)
+
+	style := styles.Get("github")
+	if style == nil {
+		style = styles.Fallback
+	}
+
+	result := renderWithStyle(content, info, lexer, style)
+
+	if result == "" {
+		t.Error("renderWithStyle returned empty string")
+	}
+
+	// Should contain line numbers
+	if !strings.Contains(result, "1") {
+		t.Error("renderWithStyle with ShowLineNumbers should contain line number 1")
+	}
+	if !strings.Contains(result, "2") {
+		t.Error("renderWithStyle with ShowLineNumbers should contain line number 2")
+	}
+
+	// Should contain some recognizable elements from the original content
+	if !strings.Contains(result, "console") && !strings.Contains(result, "log") && !strings.Contains(result, "var") {
+		t.Error("renderWithStyle result doesn't contain expected javascript elements")
+	}
+}
+
 func TestProcessMarkdownWithHighlighting(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -274,6 +340,24 @@ func TestProcessMarkdownWithHighlighting(t *testing.T) {
 			theme:    "dark",
 			wantErr:  false,
 		},
+		{
+			name:     "markdown with --numbered flag",
+			markdown: "```javascript --numbered\nconsole.log('hello');\nconsole.log('world');\n```",
+			theme:    "dark",
+			wantErr:  false,
+		},
+		{
+			name:     "markdown with highlighting and --numbered",
+			markdown: "```python{1-2} --numbered\ndef hello():\n    print('hello')\n    return True\n```",
+			theme:    "dark",
+			wantErr:  false,
+		},
+		{
+			name:     "markdown with --numbered and extra spaces",
+			markdown: "```javascript  --numbered  \nconsole.log('test');\nvar x = 1;\n```",
+			theme:    "dark",
+			wantErr:  false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -296,14 +380,22 @@ func TestProcessMarkdownWithHighlighting(t *testing.T) {
 					t.Error("processMarkdownWithHighlighting result seems too short for highlighted content")
 				}
 			}
+
+			// For code blocks with --numbered, should contain line numbers
+			if strings.Contains(tt.markdown, "--numbered") {
+				if !strings.Contains(result, "1") {
+					t.Error("processMarkdownWithHighlighting with --numbered should contain line number 1")
+				}
+			}
 		})
 	}
 }
 
 func TestCodeHighlightInfo(t *testing.T) {
 	info := CodeHighlightInfo{
-		Language: "javascript",
-		Ranges:   []LineRange{{Start: 1, End: 3}, {Start: 5, End: 5}},
+		Language:        "javascript",
+		Ranges:          []LineRange{{Start: 1, End: 3}, {Start: 5, End: 5}},
+		ShowLineNumbers: true,
 	}
 
 	if info.Language != "javascript" {
@@ -317,6 +409,10 @@ func TestCodeHighlightInfo(t *testing.T) {
 	if info.Ranges[0].Start != 1 || info.Ranges[0].End != 3 {
 		t.Errorf("First range incorrect: got {%d, %d}, expected {1, 3}",
 			info.Ranges[0].Start, info.Ranges[0].End)
+	}
+
+	if !info.ShowLineNumbers {
+		t.Error("Expected ShowLineNumbers to be true")
 	}
 }
 
