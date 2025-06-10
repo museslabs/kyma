@@ -148,6 +148,9 @@ func getBorder(border string) lipgloss.Border {
 	}
 }
 
+// getLayout parses a layout string and returns a lipgloss.Style with the specified alignment.
+// The layout string may contain one or two comma-separated position values (e.g., "center", "top,left").
+// Returns an error if the layout string is invalid or contains more than two positions.
 func getLayout(layout string) (lipgloss.Style, error) {
 	style := lipgloss.NewStyle()
 
@@ -178,6 +181,8 @@ func getLayout(layout string) (lipgloss.Style, error) {
 	return style.Align(p1, p2), nil
 }
 
+// getTheme returns a GlamourTheme for the given theme name, loading from default styles or from a JSON file if not found.
+// If the theme is not recognized and cannot be loaded from file, it falls back to the default dark theme.
 func getTheme(theme string) GlamourTheme {
 	style, ok := glamourStyles.DefaultStyles[theme]
 	if !ok {
@@ -260,6 +265,8 @@ func (p *Properties) UnmarshalYAML(bytes []byte) error {
 	return nil
 }
 
+// NewProperties creates a Properties instance from a YAML string, applying global defaults if the input is empty.
+// Returns the parsed Properties and any error encountered during YAML unmarshaling.
 func NewProperties(properties string) (Properties, error) {
 	if properties == "" {
 		return Properties{
@@ -276,6 +283,7 @@ func NewProperties(properties string) (Properties, error) {
 	return p, nil
 }
 
+// ChromaStyle converts an ansi.StylePrimitive to a Chroma-compatible style string, combining color, background color, and style attributes.
 func ChromaStyle(style ansi.StylePrimitive) string {
 	var s string
 
@@ -310,6 +318,9 @@ func ChromaStyle(style ansi.StylePrimitive) string {
 	return s
 }
 
+// GetChromaStyle returns a Chroma syntax highlighting style for the given theme name.
+// If a custom Chroma style matching the theme exists, it is returned or created from the theme's code block style configuration.
+// If no custom style is available, a predefined Chroma style is returned for known theme names, or the fallback style is used.
 func GetChromaStyle(themeName string) *chroma.Style {
 	customThemeName := chromaStyleTheme + "-" + themeName
 

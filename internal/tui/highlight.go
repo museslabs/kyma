@@ -27,6 +27,8 @@ type CodeHighlightInfo struct {
 	StartLine       int
 }
 
+// parseHighlightSyntax parses a string specifying line ranges (e.g., "{1-3,5}") into a slice of LineRange.
+// Returns nil if the input is empty or contains no valid ranges.
 func parseHighlightSyntax(syntax string) []LineRange {
 	if syntax == "" {
 		return nil
@@ -61,6 +63,7 @@ func parseHighlightSyntax(syntax string) []LineRange {
 	return ranges
 }
 
+// shouldHighlightLine returns true if the given line number falls within any of the specified line ranges.
 func shouldHighlightLine(lineNum int, ranges []LineRange) bool {
 	for _, r := range ranges {
 		if lineNum >= r.Start && lineNum <= r.End {
@@ -70,6 +73,7 @@ func shouldHighlightLine(lineNum int, ranges []LineRange) bool {
 	return false
 }
 
+// renderCustomCodeBlock returns a syntax-highlighted code block string with optional line highlighting and line numbers, using the specified language and theme.
 func renderCustomCodeBlock(content string, info CodeHighlightInfo, themeName string) string {
 	lexer := lexers.Get(info.Language)
 	if lexer == nil {
@@ -81,6 +85,8 @@ func renderCustomCodeBlock(content string, info CodeHighlightInfo, themeName str
 	return renderWithStyle(content, info, lexer, style)
 }
 
+// renderWithStyle applies syntax highlighting, optional line numbering, and custom line highlighting to code content using the specified lexer and style.
+// It returns the formatted and styled code block as a string suitable for terminal display.
 func renderWithStyle(content string, info CodeHighlightInfo, lexer chroma.Lexer, style *chroma.Style) string {
 	formatter := formatters.Get("terminal256")
 	if formatter == nil {
@@ -160,6 +166,8 @@ func renderWithStyle(content string, info CodeHighlightInfo, lexer chroma.Lexer,
 	return codeStyle.Render(result.String())
 }
 
+// processMarkdownWithHighlighting renders a markdown string with enhanced code block highlighting and formatting.
+// It detects fenced code blocks with optional language, line highlighting, line numbering, and start line options, rendering them with custom syntax highlighting when specified. Non-code segments and code blocks without special formatting are rendered using Glamour. Returns the fully rendered markdown string.
 func processMarkdownWithHighlighting(markdown string, themeName string) (string, error) {
 	re := regexp.MustCompile("(?s)```([a-zA-Z0-9_+-]*)({[^}]*})?(\\s+--numbered)?(\\s+--start-at-line\\s+(\\d+))?\\s*\n(.*?)\n```")
 
