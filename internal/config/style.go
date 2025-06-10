@@ -279,10 +279,10 @@ func NewProperties(properties string) (Properties, error) {
 func ChromaStyle(style ansi.StylePrimitive) string {
 	var s string
 
-	if style.Color != nil {
+	if style.Color != nil && *style.Color != "" {
 		s = *style.Color
 	}
-	if style.BackgroundColor != nil {
+	if style.BackgroundColor != nil && *style.BackgroundColor != "" {
 		if s != "" {
 			s += " "
 		}
@@ -305,6 +305,10 @@ func ChromaStyle(style ansi.StylePrimitive) string {
 			s += " "
 		}
 		s += "underline"
+	}
+
+	if s == "" {
+		return "inherit"
 	}
 
 	return s
