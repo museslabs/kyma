@@ -320,8 +320,8 @@ func GetChromaStyle(themeName string) *chroma.Style {
 	chromaMutex.Lock()
 	defer chromaMutex.Unlock()
 
-	if style, ok := chromaStyles.Registry[customThemeName]; ok {
-		return style
+	if chromaStyle, ok := chromaStyles.Registry[customThemeName]; ok {
+		return chromaStyle
 	}
 
 	styleConfig := getTheme(themeName)
