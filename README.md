@@ -27,7 +27,7 @@ A terminal-based presentation tool that creates beautiful presentations from mar
   - Swipe left/right
   - Slide up/down
   - Flip effects
-- **Hot reload**: Live reloading of presentation files during editing with the `-w` flag
+- **Hot reload**: Live reloading of presentation files during editing by default
 - **Customizable styling**: Configure borders, colors, and layouts via YAML front matter
 - **Theme support**: Choose from built-in Glamour themes or load custom JSON theme files
 - **Flexible layouts**: Center, align, and position content with various layout options
@@ -57,8 +57,8 @@ go build -o kyma
 # Display a presentation
 kyma presentation.md
 
-# Watch for changes and auto-reload
-kyma -w presentation.md
+# Display a presentation without hot reloading
+kyma presentation.md -s
 
 # Show version
 kyma version
