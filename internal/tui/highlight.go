@@ -24,6 +24,7 @@ type CodeHighlightInfo struct {
 	Language        string
 	Ranges          []LineRange
 	ShowLineNumbers bool
+	StartLine       int
 }
 
 func parseHighlightSyntax(syntax string) []LineRange {
@@ -92,7 +93,8 @@ func renderWithStyle(content string, info CodeHighlightInfo, lexer chroma.Lexer,
 
 	lineNumberWidth := 0
 	if info.ShowLineNumbers {
-		lineNumberWidth = len(strconv.Itoa(len(lines))) + 2
+		maxLineNum := info.StartLine + len(lines) - 1
+		lineNumberWidth = len(strconv.Itoa(maxLineNum)) + 2
 	}
 
 	lineNumberStyle := lipgloss.NewStyle().
@@ -101,19 +103,19 @@ func renderWithStyle(content string, info CodeHighlightInfo, lexer chroma.Lexer,
 
 	var result strings.Builder
 	for lineNum, line := range lines {
-		lineNumDisplay := lineNum + 1
+		displayLineNum := info.StartLine + lineNum
+		relativeLineNum := lineNum + 1
 
 		// Add line number if requested
 		if info.ShowLineNumbers {
-			lineNumStr := strconv.Itoa(lineNumDisplay)
+			lineNumStr := strconv.Itoa(displayLineNum)
 			paddedLineNum := fmt.Sprintf("%*s", lineNumberWidth-1, lineNumStr)
 			result.WriteString(lineNumberStyle.Render(paddedLineNum))
 		}
 
-		shouldHighlight := len(info.Ranges) == 0 || shouldHighlightLine(lineNumDisplay, info.Ranges)
+		shouldHighlight := len(info.Ranges) == 0 || shouldHighlightLine(relativeLineNum, info.Ranges)
 
 		if !shouldHighlight {
-			// No syntax highlighting for this line
 			result.WriteString(line)
 			if lineNum < len(lines)-1 {
 				result.WriteString("\n")
@@ -159,7 +161,7 @@ func renderWithStyle(content string, info CodeHighlightInfo, lexer chroma.Lexer,
 }
 
 func processMarkdownWithHighlighting(markdown string, themeName string) (string, error) {
-	re := regexp.MustCompile("(?s)```([a-zA-Z0-9_+-]*)({[^}]*})?(\\s+--numbered)?\\s*\n(.*?)\n```")
+	re := regexp.MustCompile("(?s)```([a-zA-Z0-9_+-]*)({[^}]*})?(\\s+--numbered)?(\\s+--start-at-line\\s+(\\d+))?\\s*\n(.*?)\n```")
 
 	matches := re.FindAllStringSubmatch(markdown, -1)
 	if len(matches) == 0 {
@@ -172,7 +174,7 @@ func processMarkdownWithHighlighting(markdown string, themeName string) (string,
 	indices := re.FindAllStringIndex(markdown, -1)
 
 	for i, match := range matches {
-		if len(match) < 5 {
+		if len(match) < 7 {
 			continue
 		}
 
@@ -200,12 +202,21 @@ func processMarkdownWithHighlighting(markdown string, themeName string) (string,
 			highlightSyntax = match[2] // e.g., "{1-2}"
 		}
 		numberedFlag := strings.TrimSpace(match[3]) // " --numbered"
-		content := match[4]                         // The actual code content
+		startLineStr := match[5]                    // The line number from --start-at-line
+		content := match[6]                         // The actual code content
+
+		startLine := 1
+		if startLineStr != "" {
+			if parsed, err := strconv.Atoi(startLineStr); err == nil && parsed > 0 {
+				startLine = parsed
+			}
+		}
 
 		info := CodeHighlightInfo{
 			Language:        language,
 			Ranges:          parseHighlightSyntax(highlightSyntax),
 			ShowLineNumbers: strings.Contains(numberedFlag, "--numbered"),
+			StartLine:       startLine,
 		}
 
 		if language != "" || info.ShowLineNumbers {

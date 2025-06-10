@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -186,6 +187,17 @@ func TestRenderCustomCodeBlock(t *testing.T) {
 			},
 			themeName: "dark",
 		},
+		{
+			name:    "code with start line offset",
+			content: "console.log('hello');\nconsole.log('world');\nvar x = 1;",
+			info: CodeHighlightInfo{
+				Language:        "javascript",
+				Ranges:          []LineRange{{Start: 2, End: 2}}, // Should highlight the second line
+				ShowLineNumbers: true,
+				StartLine:       10, // Line numbers should start at 10
+			},
+			themeName: "dark",
+		},
 	}
 
 	for _, tt := range tests {
@@ -204,8 +216,14 @@ func TestRenderCustomCodeBlock(t *testing.T) {
 
 			// Check for line numbers if requested
 			if tt.info.ShowLineNumbers {
-				if !strings.Contains(result, "1") {
+				if !strings.Contains(result, "1") && tt.info.StartLine == 1 {
 					t.Error("renderCustomCodeBlock with ShowLineNumbers should contain line number 1")
+				}
+				if tt.info.StartLine > 1 {
+					expectedFirstLine := strconv.Itoa(tt.info.StartLine)
+					if !strings.Contains(result, expectedFirstLine) {
+						t.Errorf("renderCustomCodeBlock with StartLine %d should contain line number %s", tt.info.StartLine, expectedFirstLine)
+					}
 				}
 			}
 
@@ -358,6 +376,24 @@ func TestProcessMarkdownWithHighlighting(t *testing.T) {
 			theme:    "dark",
 			wantErr:  false,
 		},
+		{
+			name:     "markdown with --start-at-line flag",
+			markdown: "```javascript --numbered --start-at-line 10\nconsole.log('hello');\nconsole.log('world');\n```",
+			theme:    "dark",
+			wantErr:  false,
+		},
+		{
+			name:     "markdown with highlighting and --start-at-line",
+			markdown: "```python{1-2} --numbered --start-at-line 5\ndef hello():\n    print('hello')\n    return True\n```",
+			theme:    "dark",
+			wantErr:  false,
+		},
+		{
+			name:     "markdown with --start-at-line only (no --numbered)",
+			markdown: "```typescript --start-at-line 100\nconst x = 1;\nconst y = 2;\n```",
+			theme:    "dark",
+			wantErr:  false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -396,6 +432,7 @@ func TestCodeHighlightInfo(t *testing.T) {
 		Language:        "javascript",
 		Ranges:          []LineRange{{Start: 1, End: 3}, {Start: 5, End: 5}},
 		ShowLineNumbers: true,
+		StartLine:       10,
 	}
 
 	if info.Language != "javascript" {
@@ -413,6 +450,10 @@ func TestCodeHighlightInfo(t *testing.T) {
 
 	if !info.ShowLineNumbers {
 		t.Error("Expected ShowLineNumbers to be true")
+	}
+
+	if info.StartLine != 10 {
+		t.Errorf("Expected StartLine to be 10, got %d", info.StartLine)
 	}
 }
 
