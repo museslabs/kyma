@@ -49,6 +49,8 @@ func Get(name string, fps int) Transition {
 		return newCollapse(fps)
 	case "expand":
 		return newExpand(fps)
+	case "fade":
+		return newFade(fps)
 	default:
 		return newNoTransition(fps)
 	}
