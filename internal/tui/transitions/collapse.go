@@ -13,7 +13,7 @@ import (
 	"github.com/museslabs/kyma/internal/skip"
 )
 
-type expand struct {
+type collapse struct {
 	width     int
 	fps       int
 	spring    harmonica.Spring
@@ -23,17 +23,17 @@ type expand struct {
 	direction direction
 }
 
-func newExpand(fps int) expand {
+func newCollapse(fps int) collapse {
 	const frequency = 7.0
 	const damping = 0.6
 
-	return expand{
+	return collapse{
 		fps:    fps,
 		spring: harmonica.NewSpring(harmonica.FPS(fps), frequency, damping),
 	}
 }
 
-func (t expand) Start(width, _ int, direction direction) Transition {
+func (t collapse) Start(width, _ int, direction direction) Transition {
 	t.width = width
 	t.animating = true
 	t.progress = 0
@@ -42,11 +42,11 @@ func (t expand) Start(width, _ int, direction direction) Transition {
 	return t
 }
 
-func (t expand) Animating() bool {
+func (t collapse) Animating() bool {
 	return t.animating
 }
 
-func (t expand) Update() (Transition, tea.Cmd) {
+func (t collapse) Update() (Transition, tea.Cmd) {
 	targetProgress := 1.0
 
 	t.progress, t.vel = t.spring.Update(t.progress, t.vel, targetProgress)
@@ -60,13 +60,13 @@ func (t expand) Update() (Transition, tea.Cmd) {
 	return t, Animate(time.Duration(t.fps))
 }
 
-func (t expand) View(prev, next string) string {
+func (t collapse) View(prev, next string) string {
 	var s strings.Builder
 
-	// Calculate how much should expand from center outward
-	expandWidth := int(math.Round(t.progress * float64(t.width) / 2))
-	centerStart := t.width/2 - expandWidth
-	centerEnd := t.width/2 + expandWidth
+	// Calculate how much should collapse from edges toward center
+	collapseWidth := int(math.Round((1.0 - t.progress) * float64(t.width) / 2))
+	centerStart := t.width/2 - collapseWidth
+	centerEnd := t.width/2 + collapseWidth
 
 	prevLines := strings.Split(prev, "\n")
 	nextLines := strings.Split(next, "\n")
@@ -85,27 +85,27 @@ func (t expand) View(prev, next string) string {
 		}
 
 		var line string
-		if expandWidth >= t.width/2 {
+		if collapseWidth <= 0 {
 			// Animation complete, show next content
 			line = truncate.String(nextLine, uint(t.width))
 		} else {
-			// Build the line with expand effect from center outward
-			// Left and right parts: show prev content
-			leftPrev := truncate.String(prevLine, uint(centerStart))
-
-			rightPrev := ""
-			if centerEnd < t.width {
-				rightPrev = charmansi.TruncateLeft(prevLine, centerEnd, "")
-			}
-
-			// Center portion: show next content expanding from center
+			// Build the line with collapse effect from edges toward center
+			// Center portion: show prev content that's collapsing
 			var center string
 			if centerEnd > centerStart {
-				truncatedNext := truncate.String(nextLine, uint(centerEnd))
-				center = skip.String(truncatedNext, uint(centerStart))
+				truncatedPrev := truncate.String(prevLine, uint(centerEnd))
+				center = skip.String(truncatedPrev, uint(centerStart))
 			}
 
-			line = leftPrev + center + rightPrev
+			// Left and right parts: show next content appearing from edges
+			leftNext := truncate.String(nextLine, uint(centerStart))
+
+			rightNext := ""
+			if centerEnd < t.width {
+				rightNext = charmansi.TruncateLeft(nextLine, centerEnd, "")
+			}
+
+			line = leftNext + center + rightNext
 			line = truncate.String(line, uint(t.width))
 		}
 
@@ -118,14 +118,14 @@ func (t expand) View(prev, next string) string {
 	return s.String()
 }
 
-func (t expand) Name() string {
-	return "expand"
+func (t collapse) Name() string {
+	return "collapse"
 }
 
-func (t expand) Opposite() Transition {
-	return newCollapse(t.fps)
+func (t collapse) Opposite() Transition {
+	return newExpand(t.fps)
 }
 
-func (t expand) Direction() direction {
+func (t collapse) Direction() direction {
 	return t.direction
 }
