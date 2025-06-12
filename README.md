@@ -32,6 +32,11 @@ A terminal-based presentation tool that creates beautiful presentations from mar
 - **Theme support**: Choose from built-in Glamour themes or load custom JSON theme files
 - **Flexible layouts**: Center, align, and position content with various layout options
 - **Simple navigation**: Intuitive keyboard controls for presentation flow (vim style btw)
+- **Presentation timer**: Built-in timer system with per-slide and global timing
+  - Toggle timer display with a single key
+  - Track time spent on each slide
+  - Monitor total presentation duration
+  - Automatic pause/resume during slide transitions
 
 ## Installation
 
@@ -69,6 +74,7 @@ kyma version
 - **Next slide**: `→`, `l`, or `Space`
 - **Previous slide**: `←` or `h`
 - **Quit**: `q`, `Esc`, or `Ctrl+C`
+- **Toggle timer**: `t` - Shows/hides the timer display with total and per-slide timing
 
 ## Configuration
 
@@ -144,6 +150,21 @@ style:
 ```
 
 Layout can also be specified as a combination: `layout: center,right`
+
+### Timer Display
+
+The timer display shows two timing metrics:
+
+- **Total**: The total duration of the presentation
+- **Slide**: The time spent on the current slide
+
+The timer display appears as an overlay in the top-left corner of the screen when toggled with the `t` key. The timer automatically:
+
+- Starts when the presentation begins
+- Pauses when switching slides
+- Resumes when a new slide is displayed
+- Maintains separate timing for each slide
+- Preserves timing state during navigation
 
 ### Global Configuration
 
