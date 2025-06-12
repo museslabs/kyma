@@ -18,6 +18,7 @@ type Slide struct {
 	ActiveTransition transitions.Transition
 	Properties       config.Properties
 	Title            string
+	Timer            Timer
 
 	preRenderedFrame string
 }
@@ -33,7 +34,12 @@ func (s *Slide) Update() (*Slide, tea.Cmd) {
 	if cmd == nil {
 		s.preRenderedFrame = ""
 	}
-	return s, cmd
+
+	// Update timer
+	var timerCmd tea.Cmd
+	s.Timer, timerCmd = s.Timer.Update(TimerTickMsg{})
+
+	return s, tea.Batch(cmd, timerCmd)
 }
 
 func (s Slide) View() string {
