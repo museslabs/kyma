@@ -6,6 +6,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"time"
+
 	"github.com/museslabs/kyma/internal/config"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
@@ -19,6 +21,7 @@ type keyMap struct {
 	Command key.Binding
 	GoTo    key.Binding
 	Jump    key.Binding
+	Timer   key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -62,36 +65,66 @@ var keys = keyMap{
 		key.WithKeys("1", "2", "3", "4", "5", "6", "7", "8", "9"),
 		key.WithHelp("1-9", "jump slides"),
 	),
+	Timer: key.NewBinding(
+		key.WithKeys("t"),
+		key.WithHelp("t", "toggle timer"),
+	),
 }
 
 func style(width, height int, styleConfig config.StyleConfig) config.SlideStyle {
 	return styleConfig.Apply(width, height)
 }
 
+// navigateToSlide handles the common pattern of pausing current timer, switching slides, and resuming
+func (m *model) navigateToSlide(newSlide *Slide) {
+	if m.slide != nil {
+		m.slide.Timer = m.slide.Timer.Pause()
+	}
+	m.slide = newSlide
+	EnsureTimerInitialized(m.slide)
+	if m.slide != nil {
+		m.slide.Timer = m.slide.Timer.Resume()
+	}
+}
+
 type model struct {
 	width  int
 	height int
 
-	slide     *Slide
-	keys      keyMap
-	help      help.Model
-	command   *Command
-	goTo      *GoTo
-	jump      *Jump
-	rootSlide *Slide
+	slide        *Slide
+	keys         keyMap
+	help         help.Model
+	command      *Command
+	goTo         *GoTo
+	jump         *Jump
+	rootSlide    *Slide
+	globalTimer  Timer
+	timerDisplay TimerDisplay
 }
 
 func New(rootSlide *Slide) model {
+	// Initialize timer only for the first slide
+	if rootSlide != nil {
+		rootSlide.Timer = NewTimer().Start()
+	}
+
 	return model{
-		slide:     rootSlide,
-		keys:      keys,
-		help:      help.New(),
-		rootSlide: rootSlide,
+		slide:        rootSlide,
+		keys:         keys,
+		help:         help.New(),
+		rootSlide:    rootSlide,
+		globalTimer:  NewTimer().Start(),
+		timerDisplay: NewTimerDisplay(),
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.ClearScreen
+	return tea.Batch(
+		tea.ClearScreen,
+		tea.Tick(time.Second, func(time.Time) tea.Msg {
+			return TimerTickMsg{}
+		}),
+	)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -101,7 +134,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if command.quitting || command.Choice() != nil {
 			if command.Choice() != nil {
-				m.slide = command.Choice()
+				m.navigateToSlide(command.Choice())
 			}
 			m.command = nil
 			return m, nil
@@ -121,7 +154,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					slide = slide.Next
 				}
 				if slide != nil {
-					m.slide = slide
+					m.navigateToSlide(slide)
 				}
 			}
 			m.goTo = nil
@@ -136,17 +169,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if jump.Quitting() {
 			if steps := jump.JumpSteps(); steps != 0 {
+				newSlide := m.slide
 				if steps > 0 {
 					// Jump forward
-					for i := 0; i < steps && m.slide.Next != nil; i++ {
-						m.slide = m.slide.Next
+					for i := 0; i < steps && newSlide.Next != nil; i++ {
+						newSlide = newSlide.Next
 					}
 				} else {
 					// Jump backward
-					for i := 0; i < -steps && m.slide.Prev != nil; i++ {
-						m.slide = m.slide.Prev
+					for i := 0; i < -steps && newSlide.Prev != nil; i++ {
+						newSlide = newSlide.Prev
 					}
 				}
+				m.navigateToSlide(newSlide)
 			}
 			m.jump = nil
 			return m, nil
@@ -208,18 +243,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			jump, cmd := jump.Update(msg)
 			m.jump = &jump
 			return m, cmd
+		} else if key.Matches(msg, m.keys.Timer) {
+			m.timerDisplay = m.timerDisplay.ToggleVisible()
+			return m, nil
 		} else if key.Matches(msg, m.keys.Next) {
 			if m.slide.Next == nil || m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating() {
 				return m, nil
 			}
-			m.slide = m.slide.Next
+			m.navigateToSlide(m.slide.Next)
 			m.slide.ActiveTransition = m.slide.Properties.Transition.Start(m.width, m.height, transitions.Forwards)
 			return m, transitions.Animate(transitions.Fps)
 		} else if key.Matches(msg, m.keys.Prev) {
 			if m.slide.Prev == nil || m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating() {
 				return m, nil
 			}
-			m.slide = m.slide.Prev
+			m.navigateToSlide(m.slide.Prev)
 			m.slide.ActiveTransition = m.slide.
 				Next.
 				Properties.
@@ -229,15 +267,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return m, transitions.Animate(transitions.Fps)
 		} else if key.Matches(msg, m.keys.Top) {
-			m.slide = m.slide.First()
+			m.navigateToSlide(m.slide.First())
 			return m, nil
 		} else if key.Matches(msg, m.keys.Bottom) {
-			m.slide = m.slide.Last()
+			m.navigateToSlide(m.slide.Last())
 			return m, nil
 		}
 	case transitions.FrameMsg:
 		slide, cmd := m.slide.Update()
 		m.slide = slide
+		return m, cmd
+	case TimerTickMsg:
+		var cmd tea.Cmd
+		m.globalTimer, cmd = m.globalTimer.Update(msg)
 		return m, cmd
 	}
 
@@ -265,6 +307,10 @@ func (m model) View() string {
 
 	if m.jump != nil && m.jump.IsShowing() {
 		return m.jump.Show(slideView, m.width, m.height)
+	}
+
+	if m.timerDisplay.IsVisible() {
+		return m.timerDisplay.Show(slideView, m.width, m.height, m.globalTimer, m.slide.Timer)
 	}
 
 	return slideView
