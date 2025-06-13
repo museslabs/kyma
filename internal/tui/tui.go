@@ -87,40 +87,78 @@ func (m *model) navigateToSlide(newSlide *Slide) {
 	if m.slide != nil {
 		m.slide.Timer = m.slide.Timer.Resume()
 	}
+
+	// Sync current slide position with speaker notes
+	m.syncCurrentSlide()
+}
+
+// syncCurrentSlide broadcasts the current slide number to speaker notes clients
+func (m *model) syncCurrentSlide() {
+	if m.syncServer == nil {
+		return
+	}
+
+	// Calculate current slide position
+	slidePos := 0
+	slide := m.rootSlide
+	for slide != nil && slide != m.slide {
+		slidePos++
+		slide = slide.Next
+	}
+
+	// Broadcast slide position to all connected clients
+	m.syncServer.BroadcastSlideChange(slidePos)
 }
 
 type model struct {
 	width  int
 	height int
 
-	slide        *Slide
-	keys         keyMap
-	help         help.Model
-	command      *Command
-	goTo         *GoTo
-	jump         *Jump
-	rootSlide    *Slide
-	globalTimer  Timer
-	timerDisplay TimerDisplay
+	slide            *Slide
+	keys             keyMap
+	help             help.Model
+	command          *Command
+	goTo             *GoTo
+	jump             *Jump
+	rootSlide        *Slide
+	globalTimer      Timer
+	timerDisplay     TimerDisplay
+	syncServer       *SyncServer
+	presentationFile string
 }
 
-func New(rootSlide *Slide) model {
+func New(rootSlide *Slide, presentationFile string) model {
 	// Initialize timer only for the first slide
 	if rootSlide != nil {
 		rootSlide.Timer = NewTimer().Start()
 	}
 
+	// Create sync server for speaker notes communication
+	syncServer, err := NewSyncServer()
+	if err != nil {
+		slog.Error("Failed to create sync server", "error", err)
+		syncServer = nil
+	} else {
+		syncServer.Start()
+		slog.Info("Sync server ready for speaker notes")
+	}
+
 	return model{
-		slide:        rootSlide,
-		keys:         keys,
-		help:         help.New(),
-		rootSlide:    rootSlide,
-		globalTimer:  NewTimer().Start(),
-		timerDisplay: NewTimerDisplay(),
+		slide:            rootSlide,
+		keys:             keys,
+		help:             help.New(),
+		rootSlide:        rootSlide,
+		globalTimer:      NewTimer().Start(),
+		timerDisplay:     NewTimerDisplay(),
+		syncServer:       syncServer,
+		presentationFile: presentationFile,
 	}
 }
 
 func (m model) Init() tea.Cmd {
+	// Initial sync for speaker notes
+	m.syncCurrentSlide()
+
 	return tea.Batch(
 		tea.ClearScreen,
 		tea.Tick(time.Second, func(time.Time) tea.Msg {
@@ -227,6 +265,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 
 		if key.Matches(msg, m.keys.Quit) {
+			// Clean up sync server before quitting
+			if m.syncServer != nil {
+				m.syncServer.Stop()
+			}
 			return m, tea.Quit
 		} else if key.Matches(msg, m.keys.Command) {
 			command := NewCommand(m.rootSlide)
@@ -320,4 +362,9 @@ func (m model) View() string {
 	}
 
 	return slideView
+}
+
+// GetSyncServer returns the sync server instance
+func (m model) GetSyncServer() *SyncServer {
+	return m.syncServer
 }

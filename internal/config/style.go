@@ -26,6 +26,7 @@ type Properties struct {
 	Title      string                 `yaml:"title"`
 	Style      StyleConfig            `yaml:"style"`
 	Transition transitions.Transition `yaml:"transition"`
+	Notes      string                 `yaml:"notes"`
 }
 
 type SlideStyle struct {
@@ -217,6 +218,7 @@ func (p *Properties) UnmarshalYAML(bytes []byte) error {
 		Style      StyleConfig `yaml:"style"`
 		Transition string      `yaml:"transition"`
 		Preset     string      `yaml:"preset"`
+		Notes      string      `yaml:"notes"`
 	}{}
 
 	if err := yaml.Unmarshal(bytes, &aux); err != nil {
@@ -224,6 +226,7 @@ func (p *Properties) UnmarshalYAML(bytes []byte) error {
 	}
 
 	p.Title = aux.Title
+	p.Notes = aux.Notes
 
 	if aux.Preset != "" {
 		preset, ok := GlobalConfig.Presets[aux.Preset]

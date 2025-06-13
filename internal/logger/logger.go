@@ -27,6 +27,19 @@ func Load(logPath string) error {
 	return initLogger(logFilePath)
 }
 
+// LoadNoOp sets up a no-op logger that discards all log messages
+func LoadNoOp() error {
+	// Create a no-op handler that discards all messages
+	handler := slog.NewTextHandler(nil, &slog.HandlerOptions{
+		Level: slog.LevelError + 1, // Set level higher than any actual level to discard all
+	})
+
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
+
+	return nil
+}
+
 func initLogger(logPath string) error {
 	logDir := filepath.Dir(logPath)
 	if err := os.MkdirAll(logDir, 0755); err != nil {
