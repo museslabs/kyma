@@ -177,6 +177,9 @@ func (m SpeakerNotesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "esc", "ctrl+c":
+			if m.syncClient != nil {
+				m.syncClient.Close()
+			}
 			return m, tea.Quit
 		}
 	}
