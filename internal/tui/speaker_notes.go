@@ -77,12 +77,17 @@ func NewSpeakerNotes(rootSlide *Slide) SpeakerNotesModel {
 	// Create buffered channel for slide changes
 	slideChangeChan := make(chan int, 10)
 
+	status := StatusConnected
+	if syncClient == nil {
+		status = StatusDisconnectedWaiting
+	}
+
 	return SpeakerNotesModel{
 		currentSlide:     0,
 		slides:           slides,
 		syncClient:       syncClient,
 		slideChangeChan:  slideChangeChan,
-		connectionStatus: StatusConnected,
+		connectionStatus: status,
 		reconnecting:     false,
 	}
 }
