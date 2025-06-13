@@ -27,6 +27,17 @@ func Load(logPath string) error {
 	return initLogger(logFilePath)
 }
 
+func LoadNoOp() error {
+	handler := slog.NewTextHandler(nil, &slog.HandlerOptions{
+		Level: slog.LevelError + 1,
+	})
+
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
+
+	return nil
+}
+
 func initLogger(logPath string) error {
 	logDir := filepath.Dir(logPath)
 	if err := os.MkdirAll(logDir, 0755); err != nil {

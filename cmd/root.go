@@ -23,12 +23,14 @@ var (
 	static     bool
 	configPath string
 	logPath    string
+	notes      bool
 )
 
 func init() {
 	rootCmd.Flags().BoolVarP(&static, "static", "s", false, "Disable live reload (watch mode is enabled by default)")
 	rootCmd.Flags().StringVarP(&configPath, "config", "c", "", "Path to config file")
 	rootCmd.Flags().StringVarP(&logPath, "log", "l", "", "Path to log file (default: ~/.config/kyma/logs/<timestamp>.kyma.log)")
+	rootCmd.Flags().BoolVarP(&notes, "notes", "n", false, "Run in speaker notes mode")
 	rootCmd.AddCommand(versionCmd)
 }
 
@@ -48,8 +50,15 @@ var rootCmd = &cobra.Command{
 		DisableDefaultCmd: true,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := logger.Load(logPath); err != nil {
-			return fmt.Errorf("failed to initialize slog: %w", err)
+		// Use no-op logger for speaker notes mode, regular logger for main presentation
+		if notes {
+			if err := logger.LoadNoOp(); err != nil {
+				return fmt.Errorf("failed to initialize no-op logger: %w", err)
+			}
+		} else {
+			if err := logger.Load(logPath); err != nil {
+				return fmt.Errorf("failed to initialize slog: %w", err)
+			}
 		}
 
 		slog.Info("Starting Kyma")
@@ -76,7 +85,16 @@ var rootCmd = &cobra.Command{
 
 		slog.Info("Successfully parsed presentation")
 
-		p := tea.NewProgram(tui.New(root), tea.WithAltScreen(), tea.WithMouseAllMotion())
+		if notes {
+			speakerModel := tui.NewSpeakerNotes(root)
+			p := tea.NewProgram(speakerModel, tea.WithAltScreen())
+			if _, err := p.Run(); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		p := tea.NewProgram(tui.New(root, filename), tea.WithAltScreen(), tea.WithMouseAllMotion())
 
 		if !static {
 			slog.Info("Starting file watcher for live reload")

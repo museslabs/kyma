@@ -1,0 +1,22 @@
+global:
+  style:
+    border: hidden
+    border_color: "#9999CC"
+    layout: center
+    theme: dark
+  transition: none
+
+presets:
+  minimal:
+    style:
+      border: hidden
+      theme: notty
+    transition: none
+  dark:
+    style:
+      theme: dark
+      layout: center
+      border: hidden
+    transition: swipeLeft
+  animated:
+    transition: slideUp

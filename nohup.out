@@ -1,0 +1,12 @@
+[90m[main 2025-06-18T08:43:59.023Z][0m updateURL https://api2.cursor.sh/updates/api/update/linux-x64/cursor/1.1.2/9c4dfa275a167723d9b5a330cba5be9164f4e4ac3a61cae218ca7afd653e96d0/stable
+[90m[main 2025-06-18T08:43:59.023Z][0m update#setState idle
+[91m[main 2025-06-18T08:44:00.890Z][0m vscode-file: Refused to load resource /tmp/.mount_cursorPDPkD1/usr/share/cursor/resources/app/extensions/theme-seti/icons/seti.woff from vscode-file: protocol (original URL: vscode-file://vscode-app/tmp/.mount_cursorPDPkD1/usr/share/cursor/resources/app/extensions/theme-seti/icons/seti.woff)
+[90m[main 2025-06-18T08:44:29.025Z][0m update#setState checking for updates
+[90m[main 2025-06-18T08:44:29.167Z][0m update#setState ready
+[90m[main 2025-06-18T11:17:32.661Z][0m Extension host with pid 74258 exited with code: 0, signal: unknown.
+[90m[main 2025-06-18T11:17:32.747Z][0m Extension host with pid 74211 exited with code: 0, signal: unknown.
+[90m[main 2025-06-20T06:43:38.010Z][0m updateURL https://api2.cursor.sh/updates/api/update/linux-x64/cursor/1.1.2/9c4dfa275a167723d9b5a330cba5be9164f4e4ac3a61cae218ca7afd653e96d0/stable
+[90m[main 2025-06-20T06:43:38.010Z][0m update#setState idle
+[91m[main 2025-06-20T06:43:40.212Z][0m vscode-file: Refused to load resource /tmp/.mount_cursorih2boB/usr/share/cursor/resources/app/extensions/theme-seti/icons/seti.woff from vscode-file: protocol (original URL: vscode-file://vscode-app/tmp/.mount_cursorih2boB/usr/share/cursor/resources/app/extensions/theme-seti/icons/seti.woff)
+[90m[main 2025-06-20T06:44:08.013Z][0m update#setState checking for updates
+[90m[main 2025-06-20T06:44:08.259Z][0m update#setState ready
