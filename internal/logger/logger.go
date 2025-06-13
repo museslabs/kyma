@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-var Logger *slog.Logger
-
 const maxLogFiles = 3
 
 func Load(logPath string) error {
@@ -52,9 +50,10 @@ func initLogger(logPath string) error {
 		AddSource: true,
 	})
 
-	Logger = slog.New(handler)
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
 
-	Info("Logger initialized", "log_file", logPath, "format", "json")
+	slog.Info("Logger initialized", "log_file", logPath, "format", "json")
 	return nil
 }
 
@@ -120,28 +119,4 @@ func getDefaultLogPath() (string, error) {
 	logFile := fmt.Sprintf("%s.kyma.log", timestamp)
 
 	return filepath.Join(logsDir, logFile), nil
-}
-
-func Debug(msg string, keyvals ...any) {
-	if Logger != nil {
-		Logger.Debug(msg, keyvals...)
-	}
-}
-
-func Info(msg string, keyvals ...any) {
-	if Logger != nil {
-		Logger.Info(msg, keyvals...)
-	}
-}
-
-func Warn(msg string, keyvals ...any) {
-	if Logger != nil {
-		Logger.Warn(msg, keyvals...)
-	}
-}
-
-func Error(msg string, keyvals ...any) {
-	if Logger != nil {
-		Logger.Error(msg, keyvals...)
-	}
 }

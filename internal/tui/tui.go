@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"log/slog"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -9,7 +11,6 @@ import (
 	"time"
 
 	"github.com/museslabs/kyma/internal/config"
-	"github.com/museslabs/kyma/internal/logger"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
@@ -130,7 +131,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
-		logger.Info("Key pressed", "key", keyMsg.String())
+		slog.Info("Key pressed", "key", keyMsg.String())
 	}
 
 	if m.command != nil && m.command.IsShowing() {
@@ -224,6 +225,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case tea.KeyMsg:
+
 		if key.Matches(msg, m.keys.Quit) {
 			return m, tea.Quit
 		} else if key.Matches(msg, m.keys.Command) {
@@ -232,7 +234,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.command = &command
 			return m, nil
 		} else if key.Matches(msg, m.keys.GoTo) {
-			// Count total slides
 			count := 0
 			for slide := m.rootSlide; slide != nil; slide = slide.Next {
 				count++
