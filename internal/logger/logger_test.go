@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -55,9 +56,6 @@ func TestLoad(t *testing.T) {
 				}
 			}()
 
-			// Reset global logger
-			Logger = nil
-
 			err := Load(tt.logPath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
@@ -65,13 +63,9 @@ func TestLoad(t *testing.T) {
 			}
 
 			if tt.checkFile && !tt.wantErr {
-				if Logger == nil {
-					t.Error("Logger should be initialized after successful Load()")
-					return
-				}
 
 				// Test that we can actually log
-				Info("test message", "key", "value")
+				slog.Info("test message", "key", "value")
 
 				// Check that log file exists
 				var logPath string
@@ -271,19 +265,16 @@ func TestLoggerFunctions(t *testing.T) {
 
 	logPath := filepath.Join(tmpDir, "test.log")
 
-	// Reset global logger
-	Logger = nil
-
 	err = Load(logPath)
 	if err != nil {
 		t.Fatalf("Failed to load logger: %v", err)
 	}
 
 	// Test all logging functions
-	Debug("debug message", "key", "value")
-	Info("info message", "key", "value")
-	Warn("warn message", "key", "value")
-	Error("error message", "key", "value")
+	slog.Debug("debug message", "key", "value")
+	slog.Info("info message", "key", "value")
+	slog.Warn("warn message", "key", "value")
+	slog.Error("error message", "key", "value")
 
 	// Check that log file was created and has content
 	if _, err := os.Stat(logPath); os.IsNotExist(err) {
@@ -311,12 +302,9 @@ func TestLoggerFunctions(t *testing.T) {
 }
 
 func TestLoggerWithNilLogger(t *testing.T) {
-	// Reset global logger to nil
-	Logger = nil
-
 	// These should not panic
-	Debug("debug message", "key", "value")
-	Info("info message", "key", "value")
-	Warn("warn message", "key", "value")
-	Error("error message", "key", "value")
+	slog.Debug("debug message", "key", "value")
+	slog.Info("info message", "key", "value")
+	slog.Warn("warn message", "key", "value")
+	slog.Error("error message", "key", "value")
 }

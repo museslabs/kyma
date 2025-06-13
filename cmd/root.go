@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
@@ -47,40 +49,40 @@ var rootCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := logger.Load(logPath); err != nil {
-			return fmt.Errorf("failed to initialize logger: %w", err)
+			return fmt.Errorf("failed to initialize slog: %w", err)
 		}
 
-		logger.Info("Starting Kyma")
+		slog.Info("Starting Kyma")
 
 		if err := config.Load(configPath); err != nil {
-			logger.Error("Failed to load config", "error", err, "config_path", configPath)
+			slog.Error("Failed to load config", "error", err, "config_path", configPath)
 			return err
 		}
 
 		filename := args[0]
-		logger.Info("Loading presentation", "filename", filename)
+		slog.Info("Loading presentation", "filename", filename)
 
 		data, err := os.ReadFile(filename)
 		if err != nil {
-			logger.Error("Failed to read presentation file", "error", err, "filename", filename)
+			slog.Error("Failed to read presentation file", "error", err, "filename", filename)
 			return err
 		}
 
 		root, err := parseSlides(string(data))
 		if err != nil {
-			logger.Error("Failed to parse slides", "error", err, "filename", filename)
+			slog.Error("Failed to parse slides", "error", err, "filename", filename)
 			return err
 		}
 
-		logger.Info("Successfully parsed presentation")
+		slog.Info("Successfully parsed presentation")
 
 		p := tea.NewProgram(tui.New(root), tea.WithAltScreen(), tea.WithMouseAllMotion())
 
 		if !static {
-			logger.Info("Starting file watcher for live reload")
+			slog.Info("Starting file watcher for live reload")
 			watcher, err := fsnotify.NewWatcher()
 			if err != nil {
-				logger.Error("Failed to create file watcher", "error", err)
+				slog.Error("Failed to create file watcher", "error", err)
 				p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
 				return nil
 			}
@@ -114,13 +116,13 @@ var rootCmd = &cobra.Command{
 			go watchFileChanges(watcher, p, filename, absPath, configPath)
 		}
 
-		logger.Info("Starting TUI program")
+		slog.Info("Starting TUI program")
 		if _, err := p.Run(); err != nil {
-			logger.Error("TUI program failed", "error", err)
+			slog.Error("TUI program failed", "error", err)
 			return err
 		}
 
-		logger.Info("Kyma session ended")
+		slog.Info("Kyma session ended")
 		return nil
 	},
 }
@@ -150,29 +152,29 @@ func watchFileChanges(
 						debounceTimer.Stop()
 					}
 					debounceTimer = time.AfterFunc(100*time.Millisecond, func() {
-						logger.Info("File changed, reloading presentation", "file", event.Name)
+						slog.Info("File changed, reloading presentation", "file", event.Name)
 
 						data, err := os.ReadFile(filename)
 						if err != nil {
-							logger.Error("Failed to read file during reload", "error", err, "filename", filename)
+							slog.Error("Failed to read file during reload", "error", err, "filename", filename)
 							p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
 							return
 						}
 
 						if err := config.Load(configPath); err != nil {
-							logger.Error("Failed to reload config", "error", err, "config_path", configPath)
+							slog.Error("Failed to reload config", "error", err, "config_path", configPath)
 							p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
 							return
 						}
 
 						newRoot, err := parseSlides(string(data))
 						if err != nil {
-							logger.Error("Failed to parse slides during reload", "error", err, "filename", filename)
+							slog.Error("Failed to parse slides during reload", "error", err, "filename", filename)
 							p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
 							return
 						}
 
-						logger.Info("Successfully reloaded presentation")
+						slog.Info("Successfully reloaded presentation")
 						p.Send(tui.UpdateSlidesMsg{NewRoot: newRoot})
 					})
 				}
@@ -188,7 +190,7 @@ func watchFileChanges(
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		logger.Error("Application failed", "error", err)
+		slog.Error("Application failed", "error", err)
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
