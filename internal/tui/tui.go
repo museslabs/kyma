@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/museslabs/kyma/internal/config"
+	"github.com/museslabs/kyma/internal/logger"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
@@ -128,6 +129,10 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		logger.Info("Key pressed", "key", keyMsg.String())
+	}
+
 	if m.command != nil && m.command.IsShowing() {
 		command, cmd := m.command.Update(msg)
 		m.command = &command
