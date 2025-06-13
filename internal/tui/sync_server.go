@@ -7,12 +7,14 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type SyncServer struct {
 	listener     net.Listener
 	port         int
 	clients      map[net.Conn]bool
+	clientsMu    sync.Mutex
 	running      bool
 	currentSlide int
 }
@@ -59,10 +61,12 @@ func (s *SyncServer) Stop() {
 		s.listener.Close()
 	}
 
+	s.clientsMu.Lock()
 	for client := range s.clients {
 		client.Close()
 	}
 	s.clients = make(map[net.Conn]bool)
+	s.clientsMu.Unlock()
 
 	slog.Info("Sync server stopped")
 }
@@ -72,6 +76,7 @@ func (s *SyncServer) BroadcastSlideChange(slideNumber int) {
 
 	message := fmt.Sprintf("SLIDE:%d\n", slideNumber)
 
+	s.clientsMu.Lock()
 	for client := range s.clients {
 		_, err := client.Write([]byte(message))
 		if err != nil {
@@ -79,6 +84,7 @@ func (s *SyncServer) BroadcastSlideChange(slideNumber int) {
 			client.Close()
 		}
 	}
+	s.clientsMu.Unlock()
 }
 
 func (s *SyncServer) acceptConnections() error {
@@ -94,7 +100,9 @@ func (s *SyncServer) acceptConnections() error {
 			return fmt.Errorf("failed to accept connection: %w", err)
 		}
 
+		s.clientsMu.Lock()
 		s.clients[conn] = true
+		s.clientsMu.Unlock()
 
 		currentSlide := s.currentSlide
 
