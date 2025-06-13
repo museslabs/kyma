@@ -17,13 +17,15 @@ type SyncServer struct {
 	currentSlide int
 }
 
+const startPort = 3000
+
 func NewSyncServer() (*SyncServer, error) {
-	startPort := 3000
 	maxAttempts := 100
 
 	for port := startPort; port < startPort+maxAttempts; port++ {
 		listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 		if err != nil {
+			// Server not found on this port, try next one
 			continue
 		}
 
@@ -94,7 +96,6 @@ func (s *SyncServer) acceptConnections() error {
 
 		s.clients[conn] = true
 
-		// Send current slide to the newly connected client
 		currentSlide := s.currentSlide
 
 		message := fmt.Sprintf("SLIDE:%d\n", currentSlide)
@@ -112,16 +113,12 @@ type SyncClient struct {
 	port int
 }
 
-// NewSyncClient creates a new client connection to the sync server
-// Searches for the server starting from port 3000
 func NewSyncClient() (*SyncClient, error) {
-	startPort := 3000
-	maxAttempts := 100 // Try ports 3000-3099
+	maxAttempts := 100
 
 	for port := startPort; port < startPort+maxAttempts; port++ {
 		conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 		if err != nil {
-			// Server not found on this port, try next one
 			continue
 		}
 
