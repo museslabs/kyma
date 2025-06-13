@@ -17,8 +17,10 @@ require (
 	github.com/spf13/viper v1.20.1
 )
 
+require golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
+
 require (
-	github.com/alecthomas/chroma/v2 v2.15.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.15.0
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
