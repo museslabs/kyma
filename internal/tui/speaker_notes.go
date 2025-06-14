@@ -43,7 +43,6 @@ type SpeakerNotesModel struct {
 	syncClient       *SyncClient
 	slideChangeChan  chan int
 	connectionStatus ConnectionStatus
-	reconnecting     bool
 }
 
 type SlideChangeMsg struct {
@@ -67,20 +66,19 @@ func NewSpeakerNotes(rootSlide *Slide) SpeakerNotesModel {
 		slide = slide.Next
 	}
 
-	// Create sync client to connect to the main presentation
+	// Attempt to create a sync client to connect to the main presentation
 	syncClient, err := NewSyncClient()
+
+	var status ConnectionStatus
 	if err != nil {
 		slog.Warn("Failed to connect to sync server - run the main presentation first", "error", err)
-		syncClient = nil
+		status = StatusDisconnectedWaiting
+	} else {
+		status = StatusConnected
 	}
 
 	// Create buffered channel for slide changes
 	slideChangeChan := make(chan int, 10)
-
-	status := StatusConnected
-	if syncClient == nil {
-		status = StatusDisconnectedWaiting
-	}
 
 	return SpeakerNotesModel{
 		currentSlide:     0,
@@ -88,7 +86,6 @@ func NewSpeakerNotes(rootSlide *Slide) SpeakerNotesModel {
 		syncClient:       syncClient,
 		slideChangeChan:  slideChangeChan,
 		connectionStatus: status,
-		reconnecting:     false,
 	}
 }
 
@@ -167,7 +164,6 @@ func (m SpeakerNotesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.waitForSlideChange()
 	case ReconnectAttemptMsg:
 		m.connectionStatus = StatusReconnecting
-		m.reconnecting = true
 		// Wait a bit before trying again
 		return m, tea.Tick(time.Millisecond*200, func(time.Time) tea.Msg {
 			return m.attemptReconnect()()
@@ -175,7 +171,6 @@ func (m SpeakerNotesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ReconnectedMsg:
 		m.syncClient = msg.Client
 		m.connectionStatus = StatusConnected
-		m.reconnecting = false
 		// Start listening for slide changes again
 		go m.listenForSlideChangesWithReconnect()
 		return m, m.waitForSlideChange()
