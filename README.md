@@ -32,6 +32,10 @@ A terminal-based presentation tool that creates beautiful presentations from mar
 - **Theme support**: Choose from built-in Glamour themes or load custom JSON theme files
 - **Flexible layouts**: Center, align, and position content with various layout options
 - **Simple navigation**: Intuitive keyboard controls for presentation flow (vim style btw)
+  - Command palette with slide search and filtering
+  - Direct slide jumping by number
+  - Multi-slide forward/backward jumping
+  - Quick first/last slide navigation
 - **Presentation timer**: Built-in timer system with per-slide and global timing
   - Toggle timer display with a single key
   - Track time spent on each slide
@@ -73,8 +77,13 @@ kyma version
 
 - **Next slide**: `→`, `l`, or `Space`
 - **Previous slide**: `←` or `h`
-- **Quit**: `q`, `Esc`, or `Ctrl+C`
+- **First slide**: `Home`, `Shift+↑`, or `0`
+- **Last slide**: `End`, `Shift+↓`, or `$`
+- **Command palette**: `/` or `p` - Opens a searchable list of all slides for quick navigation
+- **Go to slide**: `g` or `:` - Jump directly to a specific slide number
+- **Jump slides**: `1-9` + `h`/`←` or `l`/`→` - Jump multiple slides backward/forward (e.g., `5h` jumps 5 slides back)
 - **Toggle timer**: `t` - Shows/hides the timer display with total and per-slide timing
+- **Quit**: `q`, `Esc`, or `Ctrl+C`
 
 ## Configuration
 
