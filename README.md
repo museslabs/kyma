@@ -13,11 +13,21 @@ A terminal-based presentation tool that creates beautiful presentations from mar
 </div>
 &nbsp;
 <div align="center">
+  <img src="https://github.com/user-attachments/assets/6548e4b7-d3f2-45ab-89af-100e3ef37087" alt="Kyma in action at Laravel Greece 10 year anniversary meetup in Athens" width=60%>
+  <br>
+  <em>Kyma being used for a <a href="https://www.youtube.com/live/_R_sACr74bI?si=2PkDE8uXOvdN32nI&t=1067">talk</a> at Laravel Greece's 10 year anniversary meetup in Athens</em>
+</div>
+&nbsp;
+
+
+<div align="center">
   <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/jesseduffield/lazygit">
   <img alt="Codacy Badge" src="https://api.codacy.com/project/badge/Grade/e4e6d3a8dc2a4614b40404f64d1d6e5f">
   <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/museslabs/kyma/go.yml">
   <img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/museslabs/kyma">
 </div>
+
+
 
 ## Features
 
