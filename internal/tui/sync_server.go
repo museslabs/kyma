@@ -19,29 +19,22 @@ type SyncServer struct {
 	currentSlide int
 }
 
-const startPort = 3000
+const port = 34622
 
 func NewSyncServer() (*SyncServer, error) {
-	maxAttempts := 100
-
-	for port := startPort; port < startPort+maxAttempts; port++ {
-		listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
-		if err != nil {
-			// Server not found on this port, try next one
-			continue
-		}
-
-		server := &SyncServer{
-			listener:     listener,
-			port:         port,
-			clients:      make(map[net.Conn]bool),
-			currentSlide: 0,
-		}
-
-		return server, nil
+	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen on port: %w", err)
 	}
 
-	return nil, fmt.Errorf("no available ports in range %d-%d", startPort, startPort+maxAttempts-1)
+	server := &SyncServer{
+		listener:     listener,
+		port:         port,
+		clients:      make(map[net.Conn]bool),
+		currentSlide: 0,
+	}
+
+	return server, nil
 }
 
 func (s *SyncServer) GetPort() int {
@@ -122,23 +115,17 @@ type SyncClient struct {
 }
 
 func NewSyncClient() (*SyncClient, error) {
-	maxAttempts := 100
-
-	for port := startPort; port < startPort+maxAttempts; port++ {
-		conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
-		if err != nil {
-			continue
-		}
-
-		client := &SyncClient{
-			conn: conn,
-			port: port,
-		}
-
-		return client, nil
+	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to sync server: %w", err)
 	}
 
-	return nil, fmt.Errorf("no sync server found in port range %d-%d", startPort, startPort+maxAttempts-1)
+	client := &SyncClient{
+		conn: conn,
+		port: port,
+	}
+
+	return client, nil
 }
 
 func (c *SyncClient) ListenForSlideChanges(slideChangeChan chan<- int) {
