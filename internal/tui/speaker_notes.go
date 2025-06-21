@@ -78,7 +78,7 @@ func NewSpeakerNotes(rootSlide *Slide) SpeakerNotesModel {
 	}
 
 	// Create buffered channel for slide changes
-	slideChangeChan := make(chan int, 10)
+	slideChangeChan := make(chan int)
 
 	return SpeakerNotesModel{
 		currentSlide:     0,
@@ -123,10 +123,7 @@ func (m SpeakerNotesModel) listenForSlideChangesWithReconnect() {
 	m.syncClient.ListenForSlideChanges(m.slideChangeChan)
 
 	// If we reach here, the connection was lost
-	select {
-	case m.slideChangeChan <- -1:
-	default:
-	}
+	m.slideChangeChan <- -1
 }
 
 func (m SpeakerNotesModel) attemptReconnect() tea.Cmd {
