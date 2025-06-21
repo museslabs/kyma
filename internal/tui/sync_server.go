@@ -13,7 +13,7 @@ import (
 type SyncServer struct {
 	listener     net.Listener
 	port         int
-	clients      map[net.Conn]bool
+	clients      map[net.Conn]struct{}
 	clientsMu    sync.Mutex
 	running      bool
 	currentSlide int
@@ -30,7 +30,7 @@ func NewSyncServer() (*SyncServer, error) {
 	server := &SyncServer{
 		listener:     listener,
 		port:         port,
-		clients:      make(map[net.Conn]bool),
+		clients:      make(map[net.Conn]struct{}),
 		currentSlide: 0,
 	}
 
@@ -58,7 +58,7 @@ func (s *SyncServer) Stop() {
 	for client := range s.clients {
 		client.Close()
 	}
-	s.clients = make(map[net.Conn]bool)
+	s.clients = make(map[net.Conn]struct{})
 	s.clientsMu.Unlock()
 
 	slog.Info("Sync server stopped")
@@ -94,7 +94,7 @@ func (s *SyncServer) acceptConnections() error {
 		}
 
 		s.clientsMu.Lock()
-		s.clients[conn] = true
+		s.clients[conn] = struct{}{}
 		s.clientsMu.Unlock()
 
 		currentSlide := s.currentSlide
