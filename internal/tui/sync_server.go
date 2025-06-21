@@ -137,11 +137,7 @@ func (c *SyncClient) ListenForSlideChanges(slideChangeChan chan<- int) {
 		if strings.HasPrefix(line, "SLIDE:") {
 			slideNumStr := strings.TrimPrefix(line, "SLIDE:")
 			if slideNum, err := strconv.Atoi(slideNumStr); err == nil {
-				select {
-				case slideChangeChan <- slideNum:
-				default:
-					// Channel is full, skip this update
-				}
+				slideChangeChan <- slideNum
 			}
 		}
 	}
