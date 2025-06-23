@@ -15,7 +15,7 @@ A terminal-based presentation tool that creates beautiful presentations from mar
 <div align="center">
   <img src="https://github.com/user-attachments/assets/6548e4b7-d3f2-45ab-89af-100e3ef37087" alt="Kyma in action at Laravel Greece 10 year anniversary meetup in Athens" width=60%>
   <br>
-  <em>Kyma being used for a <a href="https://www.youtube.com/live/_R_sACr74bI?si=2PkDE8uXOvdN32nI&t=1067">talk</a> at Laravel Greece's 10 year anniversary meetup in Athens</em>
+  <em>Kyma being used for a <a href="https://www.youtube.com/live/_R_sACr74bI?si=LYM9sJ1vuItUO3cm&t=259">talk</a> at Laravel Greece's 10 year anniversary meetup in Athens</em>
 </div>
 &nbsp;
 
