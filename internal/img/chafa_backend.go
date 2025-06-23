@@ -11,7 +11,7 @@ type chafaBackend struct{}
 
 const nChannels = 4
 
-func (b chafaBackend) Render(path string, width, height int32) (string, error) {
+func (b chafaBackend) Render(path string, width, height int32, hres bool) (string, error) {
 	var err error
 
 	defer func() {
@@ -24,15 +24,17 @@ func (b chafaBackend) Render(path string, width, height int32) (string, error) {
 		}
 	}()
 
-	out, err := b.render(path, width, height)
+	out, err := b.render(path, width, height, hres)
 	return out, err
 }
 
-func (b chafaBackend) render(path string, width, height int32) (string, error) {
+func (b chafaBackend) render(path string, width, height int32, hres bool) (string, error) {
 	pixels, pixelWidth, pixelHeight, err := chafa.Load(path)
 	if err != nil {
 		return "", err
 	}
+
+	chafa.CalcCanvasGeometry(width, height, &width, &height, 1, true, false)
 
 	capabilities := b.detectTerminal()
 	defer chafa.SymbolMapUnref(capabilities.symbolMap)
@@ -41,50 +43,29 @@ func (b chafaBackend) render(path string, width, height int32) (string, error) {
 	config := chafa.CanvasConfigNew()
 	defer chafa.CanvasConfigUnref(config)
 
-	chafa.CanvasConfigSetGeometry(config, width, height)
-	chafa.CanvasConfigSetCellGeometry(config, 18, 36)
 	chafa.CanvasConfigSetCanvasMode(config, capabilities.canvasMode)
-	chafa.CanvasConfigSetPixelMode(config, capabilities.pixelMode)
+	chafa.CanvasConfigSetGeometry(config, width, height)
 	chafa.CanvasConfigSetPassthrough(config, capabilities.passthrough)
 	chafa.CanvasConfigSetSymbolMap(config, capabilities.symbolMap)
+	chafa.CanvasConfigSetCellGeometry(config, 18, 36)
 
-	widthNew := config.Width
-	heightNew := config.Height
-
-	chafa.CalcCanvasGeometry(
-		width,
-		height,
-		&widthNew,
-		&heightNew,
-		0.5,
-		true,
-		false,
-	)
-	chafa.CanvasConfigSetGeometry(config, widthNew, heightNew)
+	if hres {
+		chafa.CanvasConfigSetPixelMode(config, capabilities.pixelMode)
+	} else {
+		chafa.CanvasConfigSetPixelMode(config, chafa.CHAFA_PIXEL_MODE_SYMBOLS)
+	}
 
 	canvas := chafa.CanvasNew(config)
 	defer chafa.CanvasUnRef(canvas)
 
-	frame := chafa.FrameNew(
-		pixels,
+	chafa.CanvasDrawAllPixels(
+		canvas,
 		chafa.CHAFA_PIXEL_RGBA8_UNASSOCIATED,
+		pixels,
 		pixelWidth,
 		pixelHeight,
 		pixelWidth*nChannels,
 	)
-	defer chafa.FrameUnref(frame)
-
-	img := chafa.ImageNew()
-	defer chafa.ImageUnref(img)
-
-	chafa.ImageSetFrame(img, frame)
-
-	placement := chafa.PlacementNew(img, 1)
-	defer chafa.PlacementUnref(placement)
-
-	chafa.PlacementSetTuck(placement, chafa.CHAFA_TUCK_FIT)
-
-	chafa.CanvasSetPlacement(canvas, placement)
 	printable := chafa.CanvasPrint(canvas, capabilities.termInfo)
 
 	return printable.String(), nil

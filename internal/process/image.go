@@ -5,61 +5,121 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/x/ansi"
+
 	"github.com/museslabs/kyma/internal/img"
 )
 
+type cache struct {
+	l string
+	h string
+}
+
 type ImageProcessor struct {
-	backend   img.ImageBackend
-	imageData map[string]string
+	backend img.ImageBackend
+	cache   cache
 }
 
 func NewImageProcessor() *ImageProcessor {
 	return &ImageProcessor{
-		backend:   img.Get("chafa"),
-		imageData: make(map[string]string),
+		backend: img.Get("chafa"),
+		cache:   cache{},
 	}
 }
 
-const imgPlaceholderToken = "{{IMG-TOKEN-%d}}"
+func clearKittyImg() string {
+	var b strings.Builder
 
-func (p ImageProcessor) Pre(content string) (string, error) {
-	// Clear all images
-	fmt.Print("\x1b_Ga=d\x1b\\")
+	clearAllCmd := "\x1b_Ga=d\x1b\\"
+	b.WriteString(clearAllCmd)
+
+	clearPlacementsCmd := "\x1b_Ga=d,p=1\x1b\\"
+	b.WriteString(clearPlacementsCmd)
+
+	b.WriteString("\x1b[0m")
+
+	return b.String()
+}
+
+func (p *ImageProcessor) Pre(content string, themeName string, animating bool) (string, error) {
+	var b strings.Builder
+
+	b.WriteString(clearKittyImg())
 
 	// Regex to match markdown image syntax: ![alt text](path)
 	imageRegex := regexp.MustCompile(`!\[([^\]]*)\]\(([^)]+)\)`)
 
 	matches := imageRegex.FindAllStringSubmatch(content, -1)
 	if len(matches) == 0 {
-		return content, nil
+		b.WriteString(renderMarkdownSection(content, themeName))
+		return b.String(), nil
 	}
 
+	lastIndex := 0
+	indices := imageRegex.FindAllStringIndex(content, -1)
+
 	for i, match := range matches {
-		fullMatch := match[0] // Full match: ![alt](path)
+		matchStart := indices[i][0]
+		matchEnd := indices[i][1]
+
+		// fullMatch := match[0] // Full match: ![alt](path)
 		altText := match[1]   // Alt text
 		imagePath := match[2] // Image path
 
-		token := fmt.Sprintf(imgPlaceholderToken, i)
-
-		renderedImage, err := p.backend.Render(imagePath, 10, 10)
-		if err != nil {
-			p.imageData[token] = fmt.Sprintf("[Error rendering image: %s]", altText)
-			content = strings.Replace(content, fullMatch, token, 1)
-			continue
+		if matchStart > lastIndex {
+			beforeText := content[lastIndex:matchStart]
+			b.WriteString(renderMarkdownSection(beforeText, themeName))
 		}
 
-		p.imageData[token] = renderedImage
-		content = strings.Replace(content, fullMatch, token, 1)
+		if p.cache.h == "" {
+			himg, err := p.backend.Render(imagePath, 10, 5, true)
+			if err != nil {
+				b.WriteString(fmt.Sprintf("[Error rendering image: %s]", altText))
+				lastIndex = matchEnd
+				continue
+			}
+			p.cache.h = himg
+		}
+
+		if p.cache.l == "" {
+			limg, err := p.backend.Render(imagePath, 10, 5, false)
+			if err != nil {
+				b.WriteString(fmt.Sprintf("[Error rendering image: %s]", altText))
+				lastIndex = matchEnd
+				continue
+			}
+			p.cache.l = limg
+		}
+
+		if !animating {
+			b.WriteString(ansi.SaveCursor)
+			b.WriteString(p.cache.l)
+			b.WriteString(ansi.RestoreCursor)
+			b.WriteString(p.cache.h)
+		} else {
+			b.WriteString(p.cache.l)
+		}
+
+		lastIndex = matchEnd
 	}
 
-	return content, nil
+	if lastIndex < len(content) {
+		remainingText := content[lastIndex:]
+		b.WriteString(renderMarkdownSection(remainingText, themeName))
+	}
+
+	return b.String(), nil
 }
 
-func (p ImageProcessor) Post(content string) (string, error) {
-	for token, imgData := range p.imageData {
-		if strings.Contains(content, token) {
-			content = strings.ReplaceAll(content, token, imgData)
-		}
+func renderMarkdownSection(text, themeName string) string {
+	if strings.TrimSpace(text) == "" {
+		return ""
 	}
-	return content, nil
+
+	rendered, err := glamour.Render(text, themeName)
+	if err != nil {
+		return text
+	}
+	return rendered
 }
