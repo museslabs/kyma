@@ -1,7 +1,7 @@
 package process
 
 type PreProcessor interface {
-	Pre(content string) (string, error)
+	Pre(content string, animating bool) (string, error)
 }
 
 type PostProcessor interface {

@@ -11,7 +11,7 @@ type chafaBackend struct{}
 
 const nChannels = 4
 
-func (b chafaBackend) Render(path string, width, height int32) (string, error) {
+func (b chafaBackend) Render(path string, width, height int32, animating bool) (string, error) {
 	var err error
 
 	defer func() {
@@ -24,11 +24,11 @@ func (b chafaBackend) Render(path string, width, height int32) (string, error) {
 		}
 	}()
 
-	out, err := b.render(path, width, height)
+	out, err := b.render(path, width, height, animating)
 	return out, err
 }
 
-func (b chafaBackend) render(path string, width, height int32) (string, error) {
+func (b chafaBackend) render(path string, width, height int32, animating bool) (string, error) {
 	pixels, pixelWidth, pixelHeight, err := chafa.Load(path)
 	if err != nil {
 		return "", err
@@ -44,9 +44,13 @@ func (b chafaBackend) render(path string, width, height int32) (string, error) {
 	chafa.CanvasConfigSetGeometry(config, width, height)
 	chafa.CanvasConfigSetCellGeometry(config, 18, 36)
 	chafa.CanvasConfigSetCanvasMode(config, capabilities.canvasMode)
-	chafa.CanvasConfigSetPixelMode(config, capabilities.pixelMode)
 	chafa.CanvasConfigSetPassthrough(config, capabilities.passthrough)
 	chafa.CanvasConfigSetSymbolMap(config, capabilities.symbolMap)
+	if animating {
+		chafa.CanvasConfigSetPixelMode(config, chafa.CHAFA_PIXEL_MODE_SYMBOLS)
+	} else {
+		chafa.CanvasConfigSetPixelMode(config, capabilities.pixelMode)
+	}
 
 	widthNew := config.Width
 	heightNew := config.Height
