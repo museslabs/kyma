@@ -2,6 +2,7 @@ package img
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/ploMP4/chafa-go"
@@ -46,14 +47,30 @@ func (b chafaBackend) render(path string, width, height int32, animating bool) (
 	chafa.CanvasConfigSetCanvasMode(config, capabilities.canvasMode)
 	chafa.CanvasConfigSetPassthrough(config, capabilities.passthrough)
 	chafa.CanvasConfigSetSymbolMap(config, capabilities.symbolMap)
+
+	var pixelModeUsed chafa.PixelMode
 	if animating {
+		pixelModeUsed = chafa.CHAFA_PIXEL_MODE_SYMBOLS
 		chafa.CanvasConfigSetPixelMode(config, chafa.CHAFA_PIXEL_MODE_SYMBOLS)
 	} else {
+		pixelModeUsed = capabilities.pixelMode
 		chafa.CanvasConfigSetPixelMode(config, capabilities.pixelMode)
 	}
 
 	widthNew := config.Width
 	heightNew := config.Height
+
+	slog.Info("Chafa render start",
+		"path", path,
+		"animating", animating,
+		"requested_width", width,
+		"requested_height", height,
+		"initial_width", widthNew,
+		"initial_height", heightNew,
+		"pixel_mode", pixelModeUsed,
+		"canvas_mode", capabilities.canvasMode,
+		"image_dimensions", fmt.Sprintf("%dx%d", pixelWidth, pixelHeight),
+	)
 
 	chafa.CalcCanvasGeometry(
 		width,
@@ -62,8 +79,16 @@ func (b chafaBackend) render(path string, width, height int32, animating bool) (
 		&heightNew,
 		0.5,
 		true,
-		false,
+		true,
 	)
+
+	slog.Info("Chafa geometry calculated",
+		"path", path,
+		"animating", animating,
+		"final_width", widthNew,
+		"final_height", heightNew,
+	)
+
 	chafa.CanvasConfigSetGeometry(config, widthNew, heightNew)
 
 	canvas := chafa.CanvasNew(config)
