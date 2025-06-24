@@ -37,6 +37,8 @@ A terminal-based presentation tool that creates beautiful presentations from mar
   - Swipe left/right
   - Slide up/down
   - Flip effects
+  - Collapse and expand
+  - Fade in/out
 - **Hot reload**: Live reloading of presentation files during editing by default
 - **Customizable styling**: Configure borders, colors, and layouts via YAML front matter
 - **Theme support**: Choose from built-in Glamour themes or load custom JSON theme files
@@ -155,6 +157,9 @@ This slide uses a custom JSON theme file
 - `slideUp` - Slide slides up from bottom
 - `slideDown` - Slide slides down from top
 - `flip` - Flip transition effect
+- `collapse` - Collapse transition effect
+- `expand` - Expand transition effect
+- `fade` - Fade transition effect
 
 ### Style Configuration
 
@@ -290,5 +295,5 @@ All contributions are welcome! If you're planning a significant change or you're
 - ~~Allow choosing from any glamour themes~~ ✅ **Done!**
 - ~~Support for custom JSON theme files~~ ✅ **Done!**
 - Create grid-based slide layouts with transitions for each pane
-- Add more transition effects
+- ~~Add more transition effects~~ ✅ **Done!**
 - Support image rendering in terminals (e.g., via the Kitty protocol)
