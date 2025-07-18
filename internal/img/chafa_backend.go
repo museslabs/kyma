@@ -3,15 +3,55 @@ package img
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/ploMP4/chafa-go"
 )
 
-type chafaBackend struct{}
+type chafaCache struct {
+	cache map[string]string
+}
+
+func (c *chafaCache) key(path string, width, height int32, symbols bool) string {
+	return strings.Join(
+		[]string{
+			path,
+			strconv.Itoa(int(width)),
+			strconv.Itoa(int(height)),
+			strconv.FormatBool(symbols),
+		},
+		"|",
+	)
+}
+
+func (c *chafaCache) Get(path string, width, height int32, symbols bool) string {
+	img, ok := c.cache[c.key(path, width, height, symbols)]
+	if !ok {
+		return ""
+	}
+	return img
+}
+
+func (c *chafaCache) Save(img, path string, width, height int32, symbols bool) {
+	c.cache[c.key(path, width, height, symbols)] = img
+}
+
+type chafaBackend struct {
+	cache *chafaCache
+}
 
 const nChannels = 4
 
-func (b chafaBackend) Render(path string, width, height int32, hres bool) (string, error) {
+func NewChafaBackend() *chafaBackend {
+	return &chafaBackend{
+		cache: &chafaCache{
+			cache: map[string]string{},
+		},
+	}
+}
+
+func (b *chafaBackend) Render(path string, width, height int32, symbols bool) (string, error) {
 	var err error
 
 	defer func() {
@@ -24,11 +64,18 @@ func (b chafaBackend) Render(path string, width, height int32, hres bool) (strin
 		}
 	}()
 
-	out, err := b.render(path, width, height, hres)
+	c := b.cache.Get(path, width, height, symbols)
+	if c != "" {
+		return c, nil
+	}
+
+	out, err := b.render(path, width, height, symbols)
+	b.cache.Save(out, path, width, height, symbols)
+
 	return out, err
 }
 
-func (b chafaBackend) render(path string, width, height int32, hres bool) (string, error) {
+func (b chafaBackend) render(path string, width, height int32, symbols bool) (string, error) {
 	pixels, pixelWidth, pixelHeight, err := chafa.Load(path)
 	if err != nil {
 		return "", err
@@ -49,10 +96,10 @@ func (b chafaBackend) render(path string, width, height int32, hres bool) (strin
 	chafa.CanvasConfigSetSymbolMap(config, capabilities.symbolMap)
 	chafa.CanvasConfigSetCellGeometry(config, 18, 36)
 
-	if hres {
-		chafa.CanvasConfigSetPixelMode(config, capabilities.pixelMode)
-	} else {
+	if symbols {
 		chafa.CanvasConfigSetPixelMode(config, chafa.CHAFA_PIXEL_MODE_SYMBOLS)
+	} else {
+		chafa.CanvasConfigSetPixelMode(config, capabilities.pixelMode)
 	}
 
 	canvas := chafa.CanvasNew(config)
@@ -66,7 +113,7 @@ func (b chafaBackend) render(path string, width, height int32, hres bool) (strin
 		pixelHeight,
 		pixelWidth*nChannels,
 	)
-	printable := chafa.CanvasPrint(canvas, capabilities.termInfo)
+	printable := chafa.CanvasPrint(canvas, nil)
 
 	return printable.String(), nil
 }

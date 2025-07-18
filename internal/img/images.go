@@ -1,7 +1,7 @@
 package img
 
 type ImageBackend interface {
-	Render(path string, width, height int32, hres bool) (string, error)
+	Render(path string, width, height int32, symbols bool) (string, error)
 }
 
 func Get(backend string) ImageBackend {
@@ -9,6 +9,6 @@ func Get(backend string) ImageBackend {
 	case "chafa":
 		fallthrough
 	default:
-		return chafaBackend{}
+		return NewChafaBackend()
 	}
 }
