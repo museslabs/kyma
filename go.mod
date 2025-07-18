@@ -19,7 +19,11 @@ require (
 	github.com/spf13/viper v1.20.1
 )
 
-require golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
+require (
+	github.com/aymanbagabas/go-udiff v0.3.1 // indirect
+	github.com/charmbracelet/x/exp/golden v0.0.0-20250714123521-bc8a1995e079 // indirect
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
+)
 
 require (
 	github.com/alecthomas/chroma/v2 v2.15.0
