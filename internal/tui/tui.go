@@ -8,8 +8,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"time"
-
 	"github.com/museslabs/kyma/internal/config"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
@@ -161,9 +159,9 @@ func (m model) Init() tea.Cmd {
 
 	return tea.Batch(
 		tea.ClearScreen,
-		tea.Tick(time.Second, func(time.Time) tea.Msg {
-			return TimerTickMsg{}
-		}),
+		// tea.Tick(time.Second, func(time.Time) tea.Msg {
+		// 	return TimerTickMsg{}
+		// }),
 	)
 }
 
@@ -325,10 +323,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		slide, cmd := m.slide.Update()
 		m.slide = slide
 		return m, cmd
-	case TimerTickMsg:
-		var cmd tea.Cmd
-		m.globalTimer, cmd = m.globalTimer.Update(msg)
-		return m, cmd
+		// case TimerTickMsg:
+		// 	var cmd tea.Cmd
+		// 	m.globalTimer, cmd = m.globalTimer.Update(msg)
+		// 	return m, cmd
 	}
 
 	return m, nil
