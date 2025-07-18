@@ -2,12 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-
-	"log/slog"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fsnotify/fsnotify"
@@ -27,9 +26,11 @@ var (
 )
 
 func init() {
-	rootCmd.Flags().BoolVarP(&static, "static", "s", false, "Disable live reload (watch mode is enabled by default)")
+	rootCmd.Flags().
+		BoolVarP(&static, "static", "s", false, "Disable live reload (watch mode is enabled by default)")
 	rootCmd.Flags().StringVarP(&configPath, "config", "c", "", "Path to config file")
-	rootCmd.Flags().StringVarP(&logPath, "log", "l", "", "Path to log file (default: ~/.config/kyma/logs/<timestamp>.kyma.log)")
+	rootCmd.Flags().
+		StringVarP(&logPath, "log", "l", "", "Path to log file (default: ~/.config/kyma/logs/<timestamp>.kyma.log)")
 	rootCmd.Flags().BoolVarP(&notes, "notes", "n", false, "Run in speaker notes mode")
 	rootCmd.AddCommand(versionCmd)
 }
@@ -174,20 +175,38 @@ func watchFileChanges(
 
 						data, err := os.ReadFile(filename)
 						if err != nil {
-							slog.Error("Failed to read file during reload", "error", err, "filename", filename)
+							slog.Error(
+								"Failed to read file during reload",
+								"error",
+								err,
+								"filename",
+								filename,
+							)
 							p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
 							return
 						}
 
 						if err := config.Load(configPath); err != nil {
-							slog.Error("Failed to reload config", "error", err, "config_path", configPath)
+							slog.Error(
+								"Failed to reload config",
+								"error",
+								err,
+								"config_path",
+								configPath,
+							)
 							p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
 							return
 						}
 
 						newRoot, err := parseSlides(string(data))
 						if err != nil {
-							slog.Error("Failed to parse slides during reload", "error", err, "filename", filename)
+							slog.Error(
+								"Failed to parse slides during reload",
+								"error",
+								err,
+								"filename",
+								filename,
+							)
 							p.Send(tui.UpdateSlidesMsg{NewRoot: createErrorSlide(err, "none")})
 							return
 						}
@@ -224,9 +243,9 @@ func parseSlides(data string) (*tui.Slide, error) {
 		return nil, err
 	}
 
-	root := &tui.Slide{
-		Data:       rootSlide,
-		Properties: p,
+	root, err := tui.NewSlide(rootSlide, p)
+	if err != nil {
+		return nil, err
 	}
 
 	curr := root
@@ -237,11 +256,11 @@ func parseSlides(data string) (*tui.Slide, error) {
 			return nil, err
 		}
 
-		curr.Next = &tui.Slide{
-			Data:       slide,
-			Prev:       curr,
-			Properties: p,
+		curr.Next, err = tui.NewSlide(slide, p)
+		if err != nil {
+			return nil, err
 		}
+		curr.Next.Prev = curr
 		curr = curr.Next
 	}
 

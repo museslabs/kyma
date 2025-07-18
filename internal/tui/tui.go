@@ -340,7 +340,7 @@ func (m model) View() string {
 		m.height,
 		lipgloss.Center,
 		lipgloss.Center,
-		m.slide.View(),
+		m.slide.View(m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating()),
 	)
 
 	if m.command != nil && m.command.IsShowing() {
