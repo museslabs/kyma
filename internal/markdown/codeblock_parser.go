@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 )
@@ -23,9 +24,19 @@ func (p CodeBlockParser) Trigger() []byte {
 	return []byte{'`'}
 }
 
+// Parse extracts a [CodeBlockNode] from the input, matching extended markdown
+// code block syntax. Supports language tags, line highlighting (e.g., {1-4}),
+// and custom flags (e.g., --numbered):
+//
+//	```c{1-4} --numbered
+//	int main(void) {
+//	  return 0;
+//	}
+//	```
 func (p *CodeBlockParser) Parse(r *bytes.Reader) Node {
 	for range 2 {
 		if b, err := r.ReadByte(); err != nil || b != '`' {
+			slog.Warn("failed to parse codeblock node")
 			return nil
 		}
 	}
@@ -34,9 +45,11 @@ func (p *CodeBlockParser) Parse(r *bytes.Reader) Node {
 	for {
 		b, err := r.ReadByte()
 		if err != nil {
+			slog.Warn("failed to advance reader", slog.Any("error", err))
 			return nil
 		}
 		if b == '\n' {
+			slog.Warn("failed to parse codeblock node")
 			return nil
 		}
 
@@ -53,11 +66,13 @@ func (p *CodeBlockParser) Parse(r *bytes.Reader) Node {
 
 	lines, err := p.parseLines(r)
 	if err != nil {
+		slog.Warn("failed to parse codeblock lines", slog.Any("error", err))
 		return nil
 	}
 
 	flags, err := p.parseFlags(r)
 	if err != nil {
+		slog.Warn("failed to parse codeblock flags", slog.Any("error", err))
 		return nil
 	}
 
@@ -65,6 +80,7 @@ func (p *CodeBlockParser) Parse(r *bytes.Reader) Node {
 	for {
 		b, err := r.ReadByte()
 		if err != nil {
+			slog.Warn("failed to advance reader", slog.Any("error", err))
 			return nil
 		}
 		if b == '`' {
@@ -75,6 +91,7 @@ func (p *CodeBlockParser) Parse(r *bytes.Reader) Node {
 
 	for range 2 {
 		if b, err := r.ReadByte(); err != nil || b != '`' {
+			slog.Warn("failed to parse codeblock node")
 			return nil
 		}
 	}
@@ -88,6 +105,8 @@ func (p *CodeBlockParser) Parse(r *bytes.Reader) Node {
 	}
 }
 
+// parseLines parses a comma-separated list of line ranges enclosed in braces,
+// such as {1,4-5,6}, using [CodeBlockParser.parseLineRange] for each range.
 func (p *CodeBlockParser) parseLines(r *bytes.Reader) ([]CodeBlockLineRange, error) {
 	var num bytes.Buffer
 	var lines []CodeBlockLineRange
@@ -108,6 +127,9 @@ func (p *CodeBlockParser) parseLines(r *bytes.Reader) ([]CodeBlockLineRange, err
 	return lines, nil
 }
 
+// parseLineRange is a recursive function that parses a single line range segment
+// from the input reader. It supports individual lines (e.g., 3) and ranges (e.g., 1-4),
+// terminating when a closing brace '}' or a comma ',' is encountered.
 func (p *CodeBlockParser) parseLineRange(
 	r *bytes.Reader,
 	num bytes.Buffer,
@@ -177,6 +199,7 @@ type codeblockFlags struct {
 	startLine       int
 }
 
+// parseFlags parses custom [codeblockFlags].
 func (p *CodeBlockParser) parseFlags(r *bytes.Reader) (codeblockFlags, error) {
 	flags := codeblockFlags{showLineNumbers: false, startLine: 1}
 
