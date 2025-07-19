@@ -7,25 +7,34 @@ import (
 	"log/slog"
 )
 
+// Parser defines the interface for parsing specific [Node] types. It can be
+// registered with a [MarkdownParser] to handle custom parsing logic triggered
+// by specific input bytes.
 type Parser interface {
+	// Trigger returns a slice of bytes. If any of these bytes are encountered
+	// in the input, the parser will be considered for parsing.
 	Trigger() []byte
+
+	// Parse attempts to parse a [Node] from the reader. It should return nil if
+	// parsing fails, allowing [MarkdownParser.Parse] to try the next parser.
+	// Note: The trigger byte has already been consumed before calling Parse.
 	Parse(r *bytes.Reader) Node
 }
 
 type MarkdownParser struct {
-	triggers map[byte]PrioritizedSlice[Parser]
+	registry map[byte]PrioritizedSlice[Parser]
 }
 
 func NewMarkdownParser() *MarkdownParser {
 	return &MarkdownParser{
-		triggers: map[byte]PrioritizedSlice[Parser]{},
+		registry: map[byte]PrioritizedSlice[Parser]{},
 	}
 }
 
 func (p *MarkdownParser) Register(parser PrioritizedValue[Parser]) {
 	for _, b := range parser.Value.Trigger() {
-		p.triggers[b] = append(p.triggers[b], parser)
-		p.triggers[b].Sort()
+		p.registry[b] = append(p.registry[b], parser)
+		p.registry[b].Sort()
 	}
 }
 
@@ -47,7 +56,7 @@ func (p MarkdownParser) Parse(in []byte) Node {
 			slog.Error("failed advancing reader", slog.Any("error", err))
 		}
 
-		parsers, ok := p.triggers[b]
+		parsers, ok := p.registry[b]
 		if !ok {
 			chunk.WriteByte(b)
 			continue
