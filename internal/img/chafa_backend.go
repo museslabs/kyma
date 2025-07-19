@@ -13,7 +13,7 @@ type chafaCache struct {
 	cache map[string]string
 }
 
-func (c *chafaCache) key(path string, width, height int32, symbols bool) string {
+func (c *chafaCache) key(path string, width, height int, symbols bool) string {
 	return strings.Join(
 		[]string{
 			path,
@@ -25,7 +25,7 @@ func (c *chafaCache) key(path string, width, height int32, symbols bool) string 
 	)
 }
 
-func (c *chafaCache) Get(path string, width, height int32, symbols bool) string {
+func (c *chafaCache) Get(path string, width, height int, symbols bool) string {
 	img, ok := c.cache[c.key(path, width, height, symbols)]
 	if !ok {
 		return ""
@@ -33,7 +33,7 @@ func (c *chafaCache) Get(path string, width, height int32, symbols bool) string 
 	return img
 }
 
-func (c *chafaCache) Save(img, path string, width, height int32, symbols bool) {
+func (c *chafaCache) Save(img, path string, width, height int, symbols bool) {
 	c.cache[c.key(path, width, height, symbols)] = img
 }
 
@@ -51,7 +51,7 @@ func NewChafaBackend() *chafaBackend {
 	}
 }
 
-func (b *chafaBackend) Render(path string, width, height int32, symbols bool) (string, error) {
+func (b *chafaBackend) Render(path string, width, height int, symbols bool) (string, error) {
 	var err error
 
 	defer func() {
@@ -69,7 +69,7 @@ func (b *chafaBackend) Render(path string, width, height int32, symbols bool) (s
 		return c, nil
 	}
 
-	out, err := b.render(path, width, height, symbols)
+	out, err := b.render(path, int32(width), int32(height), symbols)
 	b.cache.Save(out, path, width, height, symbols)
 
 	return out, err
