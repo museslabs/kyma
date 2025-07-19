@@ -80,13 +80,13 @@ func (r *Renderer) RenderBytes(in []byte, animating bool) (string, error) {
 		case NodeKindImage:
 			n := n.(*ImageNode)
 
-			limg, err := r.options.imgBackend.Render(n.Path, 10, 5, true)
+			limg, err := r.options.imgBackend.Render(n.Path, n.Width, n.Height, true)
 			if err != nil {
 				b.WriteString(fmt.Sprintf("[Error rendering image: %s]", n.Label))
 				continue
 			}
 
-			himg, err := r.options.imgBackend.Render(n.Path, 10, 5, false)
+			himg, err := r.options.imgBackend.Render(n.Path, n.Width, n.Height, false)
 			if err != nil {
 				b.WriteString(fmt.Sprintf("[Error rendering image: %s]", n.Label))
 				continue
