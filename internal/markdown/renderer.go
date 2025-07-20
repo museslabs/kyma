@@ -63,9 +63,9 @@ func (r *Renderer) RenderBytes(in []byte, animating bool) (string, error) {
 	var b strings.Builder
 
 	// Clear kitty images
-	b.WriteString("\x1b_Ga=d\x1b\\")
-	b.WriteString("\x1b_Ga=d,p=1\x1b\\")
-	b.WriteString("\x1b[0m")
+	if !animating {
+		b.WriteString("\x1b_Ga=d\x1b\\")
+	}
 
 	for n := r.parser.Parse(in); n != nil; n = n.Next() {
 		switch n.Kind() {

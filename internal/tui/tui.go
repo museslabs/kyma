@@ -335,12 +335,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	m.slide.Style = style(m.width, m.height, m.slide.Properties.Style)
 
+	hasOverlay := (m.command != nil && m.command.IsShowing()) ||
+		(m.goTo != nil && m.goTo.IsShowing()) ||
+		(m.jump != nil && m.jump.IsShowing())
+
 	slideView := lipgloss.Place(
 		m.width,
 		m.height,
 		lipgloss.Center,
 		lipgloss.Center,
-		m.slide.View(m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating()),
+		m.slide.View(
+			(m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating()) || hasOverlay,
+		),
 	)
 
 	if m.command != nil && m.command.IsShowing() {
