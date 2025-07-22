@@ -33,6 +33,7 @@ func init() {
 		StringVarP(&logPath, "log", "l", "", "Path to log file (default: ~/.config/kyma/logs/<timestamp>.kyma.log)")
 	rootCmd.Flags().BoolVarP(&notes, "notes", "n", false, "Run in speaker notes mode")
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(docsCmd)
 }
 
 var rootCmd = &cobra.Command{
