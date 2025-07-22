@@ -86,14 +86,17 @@ func (r *Renderer) RenderBytes(in []byte, animating bool) (string, error) {
 				continue
 			}
 
+			if r.options.imgBackend.SymbolsOnly() {
+				b.WriteString(limg)
+				continue
+			}
+
 			himg, err := r.options.imgBackend.Render(n.Path, n.Width, n.Height, false)
 			if err != nil {
 				b.WriteString(fmt.Sprintf("[Error rendering image: %s]", n.Label))
 				continue
 			}
 
-			// TODO: check if terminal supports rendering high res images in the
-			// first place otherwise you will stack two low res images
 			if !animating {
 				b.WriteString(ansi.SaveCursor)
 				b.WriteString(limg)

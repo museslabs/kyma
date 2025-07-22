@@ -51,6 +51,10 @@ func NewChafaBackend() *chafaBackend {
 	}
 }
 
+func (b *chafaBackend) SymbolsOnly() bool {
+	return b.detectTerminal().pixelMode == chafa.CHAFA_PIXEL_MODE_SYMBOLS
+}
+
 func (b *chafaBackend) Render(path string, width, height int, symbols bool) (string, error) {
 	var err error
 
@@ -118,7 +122,7 @@ func (b chafaBackend) render(path string, width, height int32, symbols bool) (st
 	return printable.String(), nil
 }
 
-type terminalCapabilities struct {
+type chafaTerminalCapabilities struct {
 	termInfo    *chafa.TermInfo
 	canvasMode  chafa.CanvasMode
 	pixelMode   chafa.PixelMode
@@ -126,7 +130,7 @@ type terminalCapabilities struct {
 	symbolMap   *chafa.SymbolMap
 }
 
-func (b chafaBackend) detectTerminal() terminalCapabilities {
+func (b chafaBackend) detectTerminal() chafaTerminalCapabilities {
 	termInfo := chafa.TermDbDetect(chafa.TermDbGetDefault(), os.Environ())
 
 	mode := chafa.TermInfoGetBestCanvasMode(termInfo)
@@ -140,7 +144,7 @@ func (b chafaBackend) detectTerminal() terminalCapabilities {
 	symbolMap := chafa.SymbolMapNew()
 	chafa.SymbolMapAddByTags(symbolMap, chafa.TermInfoGetSafeSymbolTags(termInfo))
 
-	return terminalCapabilities{
+	return chafaTerminalCapabilities{
 		termInfo:    termInfo,
 		canvasMode:  mode,
 		pixelMode:   pixelMode,
