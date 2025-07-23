@@ -1,6 +1,7 @@
 package transitions
 
 import (
+	"fmt"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -18,6 +19,7 @@ type FrameMsg time.Time
 const Fps = 60
 
 func Animate(fps time.Duration) tea.Cmd {
+	fmt.Print("\x1b_Ga=d\x1b\\")
 	return tea.Tick(time.Second/fps, func(t time.Time) tea.Msg {
 		return FrameMsg(t)
 	})

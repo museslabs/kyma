@@ -106,45 +106,47 @@ Kyma presentations use a simple format with slides separated by `----` and optio
 
 This is the content of the first slide
 
----
+----
 
 ---
-
-## transition: swipeLeft
+transition: swipeLeft
+---
 
 # Second Slide
 
 This slide will appear with a swipe left transition
 
----
+----
 
 ---
-
 transition: slideUp
 style:
 border: rounded
 border_color: "#9999CC"
 layout: center
 theme: dracula
-
 ---
 
 # Third Slide
 
 This slide has custom styling with Dracula theme
 
----
+----
 
 ---
-
 style:
 theme: /path/to/custom-theme.json
-
 ---
 
 # Fourth Slide
 
 This slide uses a custom JSON theme file
+
+----
+
+# Image with 20x10 size
+
+![alt text|20x10](./image.png)
 ```
 
 ### Available Transitions
@@ -291,4 +293,4 @@ All contributions are welcome! If you're planning a significant change or you're
 - ~~Support for custom JSON theme files~~ ✅ **Done!**
 - Create grid-based slide layouts with transitions for each pane
 - Add more transition effects
-- Support image rendering in terminals (e.g., via the Kitty protocol)
+- ~~Support image rendering in terminals (e.g., via the Kitty protocol)~~ ✅ **Done!**

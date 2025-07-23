@@ -114,7 +114,7 @@ func (s StyleConfig) Apply(width, height int) SlideStyle {
 	style := s.Layout.
 		Border(s.Border).
 		BorderForeground(lipgloss.Color(borderColor)).
-		Width(width - 4).
+		Width(width - 2).
 		Height(height - 2)
 
 	return SlideStyle{

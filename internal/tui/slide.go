@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/glamour"
-	"github.com/charmbracelet/lipgloss"
+
 	"github.com/museslabs/kyma/internal/config"
+	"github.com/museslabs/kyma/internal/markdown"
 	"github.com/museslabs/kyma/internal/tui/transitions"
 )
 
@@ -17,59 +17,52 @@ type Slide struct {
 	Style            config.SlideStyle
 	ActiveTransition transitions.Transition
 	Properties       config.Properties
-	Title            string
 	Timer            Timer
 
-	preRenderedFrame string
+	renderer *markdown.Renderer
 }
 
 type UpdateSlidesMsg struct {
 	NewRoot *Slide
 }
 
+func NewSlide(data string, props config.Properties) (*Slide, error) {
+	themeName := "dark"
+	if props.Style.Theme.Name != "" {
+		themeName = props.Style.Theme.Name
+	}
+
+	r, err := markdown.NewRenderer(themeName)
+	if err != nil {
+		return nil, err
+
+	}
+
+	return &Slide{
+		Data:       data,
+		Properties: props,
+		renderer:   r,
+	}, nil
+}
+
 func (s *Slide) Update() (*Slide, tea.Cmd) {
 	transition, cmd := s.ActiveTransition.Update()
 	s.ActiveTransition = transition
-	s.preRenderedFrame = s.view()
-	if cmd == nil {
-		s.preRenderedFrame = ""
-	}
 
 	// Update timer
-	var timerCmd tea.Cmd
-	s.Timer, timerCmd = s.Timer.Update(TimerTickMsg{})
+	// var timerCmd tea.Cmd
+	// s.Timer, timerCmd = s.Timer.Update(TimerTickMsg{})
 
-	return s, tea.Batch(cmd, timerCmd)
+	return s, tea.Batch(cmd)
 }
 
-func (s Slide) View() string {
-	if s.preRenderedFrame == "" {
-		return s.view()
-	}
-	return s.preRenderedFrame
-}
-
-func (s Slide) view() string {
+func (s *Slide) View(animating bool) string {
 	var b strings.Builder
 
-	themeName := "dark"
-
-	if s.Style.Theme.Name != "" {
-		themeName = s.Style.Theme.Name
-	}
-
-	// Pre-process markdown to handle custom highlighting syntax
-	out, err := processMarkdownWithHighlighting(s.Data, themeName)
-	if err != nil {
-		// If preprocessing fails, fall back to regular Glamour rendering
-		out, err = glamour.Render(s.Data, themeName)
-		if err != nil {
-			b.WriteString("\n\n" + lipgloss.NewStyle().
-				Foreground(lipgloss.Color("9")). // Red
-				Render("Error: "+err.Error()))
-			return b.String()
-		}
-	}
+	out, _ := s.renderer.Render(
+		s.Data,
+		(s.ActiveTransition != nil && s.ActiveTransition.Animating()) || animating,
+	)
 
 	if s.ActiveTransition != nil && s.ActiveTransition.Animating() {
 		direction := s.ActiveTransition.Direction()
@@ -77,11 +70,11 @@ func (s Slide) view() string {
 			if s.Next == nil {
 				panic("backwards transition at the last slide")
 			} else {
-				b.WriteString(s.ActiveTransition.View(s.Next.View(), s.Style.LipGlossStyle.Render(out)))
+				b.WriteString(s.ActiveTransition.View(s.Next.View(true), s.Style.LipGlossStyle.Render(out)))
 			}
 		} else {
 			if s.Prev != nil {
-				b.WriteString(s.ActiveTransition.View(s.Prev.View(), s.Style.LipGlossStyle.Render(out)))
+				b.WriteString(s.ActiveTransition.View(s.Prev.View(true), s.Style.LipGlossStyle.Render(out)))
 			} else {
 				b.WriteString(s.Style.LipGlossStyle.Render(out))
 			}
@@ -89,6 +82,7 @@ func (s Slide) view() string {
 	} else {
 		b.WriteString(s.Style.LipGlossStyle.Render(out))
 	}
+
 	return b.String()
 }
 
