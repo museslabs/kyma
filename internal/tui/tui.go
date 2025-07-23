@@ -1,7 +1,9 @@
 package tui
 
 import (
+	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -349,6 +351,12 @@ func (m model) View() string {
 		),
 	)
 
+	lines := strings.Split(slideView, "\n")
+	if len(lines) > m.height {
+		fmt.Print("\x1b_Ga=d\x1b\\")
+		return m.exceedScreenSizeView()
+	}
+
 	if m.command != nil && m.command.IsShowing() {
 		return m.command.Show(slideView, m.width, m.height)
 	}
@@ -371,4 +379,22 @@ func (m model) View() string {
 // GetSyncServer returns the sync server instance
 func (m model) GetSyncServer() *SyncServer {
 	return m.syncServer
+}
+
+func (m model) exceedScreenSizeView() string {
+	return lipgloss.Place(
+		m.width,
+		m.height,
+		lipgloss.Center,
+		lipgloss.Center,
+		lipgloss.NewStyle().
+			Width(m.width-2).
+			Height(m.height-2).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("1")).
+			Foreground(lipgloss.Color("9")).
+			Bold(true).
+			Align(lipgloss.Center, lipgloss.Center).
+			Render("Unable to render slide: content exceeds terminal size."),
+	)
 }
