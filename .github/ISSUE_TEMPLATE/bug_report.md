@@ -18,8 +18,16 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
-Please, try to add screenshots to help explain your problem.
+**Screenshots or video**
+Any screenshots, gifs or video that showcase the problem
+
+**Logs**
+Please provide relevant log output to help us troubleshoot. 
+- Default log files are located in `.config/kyma/logs`.
+- You can also specify a custom log file path using the `-l` flag, e.g.:
+```
+kyma presentation.md -l kyma.log
+```
 
 **Desktop (please complete the following information):**
 - Terminal Emulator [e.g. Alacritty]
