@@ -7,6 +7,8 @@ type ImageBackend interface {
 
 func Get(backend string) ImageBackend {
 	switch backend {
+	case "docs":
+		return NewDocsBackend()
 	case "chafa":
 		fallthrough
 	default:

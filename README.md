@@ -70,6 +70,8 @@ go build -o kyma
 
 ## Usage
 
+> run `kyma docs` for an interactive presentation of the documentation
+
 ### Basic Usage
 
 ```bash

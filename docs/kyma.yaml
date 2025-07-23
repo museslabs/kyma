@@ -1,0 +1,21 @@
+global:
+  style:
+    border: rounded
+    border_color: "#9999CC"
+    layout: center
+    theme: dracula
+  transition: none
+
+presets:
+  minimal:
+    style:
+      border: hidden
+      theme: notty
+    transition: none
+  dark:
+    style:
+      border: rounded
+      theme: dracula
+    transition: swipeLeft
+  animated:
+    transition: slideUp

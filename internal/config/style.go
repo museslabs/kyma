@@ -23,10 +23,11 @@ const (
 )
 
 type Properties struct {
-	Title      string                 `yaml:"title"`
-	Style      StyleConfig            `yaml:"style"`
-	Transition transitions.Transition `yaml:"transition"`
-	Notes      string                 `yaml:"notes"`
+	Title        string                 `yaml:"title"`
+	Style        StyleConfig            `yaml:"style"`
+	Transition   transitions.Transition `yaml:"transition"`
+	Notes        string                 `yaml:"notes"`
+	ImageBackend string                 `yaml:"image_backend"`
 }
 
 type SlideStyle struct {
@@ -214,11 +215,12 @@ func getLayoutPosition(p string) (lipgloss.Position, error) {
 
 func (p *Properties) UnmarshalYAML(bytes []byte) error {
 	aux := struct {
-		Title      string      `yaml:"title"`
-		Style      StyleConfig `yaml:"style"`
-		Transition string      `yaml:"transition"`
-		Preset     string      `yaml:"preset"`
-		Notes      string      `yaml:"notes"`
+		Title        string      `yaml:"title"`
+		Style        StyleConfig `yaml:"style"`
+		Transition   string      `yaml:"transition"`
+		Preset       string      `yaml:"preset"`
+		Notes        string      `yaml:"notes"`
+		ImageBackend string      `yaml:"image_backend"`
 	}{}
 
 	if err := yaml.Unmarshal(bytes, &aux); err != nil {
@@ -227,6 +229,7 @@ func (p *Properties) UnmarshalYAML(bytes []byte) error {
 
 	p.Title = aux.Title
 	p.Notes = aux.Notes
+	p.ImageBackend = aux.ImageBackend
 
 	if aux.Preset != "" {
 		preset, ok := GlobalConfig.Presets[aux.Preset]
@@ -255,6 +258,9 @@ func (p *Properties) UnmarshalYAML(bytes []byte) error {
 	}
 	if p.Transition == nil {
 		p.Transition = GlobalConfig.Global.Transition
+	}
+	if p.ImageBackend == "" {
+		p.ImageBackend = "chafa"
 	}
 
 	return nil

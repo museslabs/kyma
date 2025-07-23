@@ -32,7 +32,7 @@ func NewSlide(data string, props config.Properties) (*Slide, error) {
 		themeName = props.Style.Theme.Name
 	}
 
-	r, err := markdown.NewRenderer(themeName)
+	r, err := markdown.NewRenderer(themeName, markdown.WithImageBackend(props.ImageBackend))
 	if err != nil {
 		return nil, err
 
