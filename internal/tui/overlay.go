@@ -68,8 +68,6 @@ func placeOverlay(x, y int, fg, bg string, opts ...WhitespaceOption) string {
 
 	var b strings.Builder
 
-	b.WriteString("\x1b_Ga=d\x1b\\")
-
 	for i, bgLine := range bgLines {
 		if i > 0 {
 			b.WriteByte('\n')
