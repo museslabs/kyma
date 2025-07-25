@@ -287,6 +287,7 @@ All contributions are welcome! If you're planning a significant change or you're
   - [Harmonica](https://github.com/charmbracelet/harmonica) - Smooth animations
 - [Cobra](https://github.com/spf13/cobra) for CLI interface
 - [fsnotify](https://github.com/fsnotify/fsnotify) for file watching capabilities
+- [chafa-go](https://github.com/ploMP4/chafa-go) for rendering images
 
 ## Roadmap
 
