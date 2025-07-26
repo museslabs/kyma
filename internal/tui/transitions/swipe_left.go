@@ -1,6 +1,7 @@
 package transitions
 
 import (
+	"log/slog"
 	"math"
 	"strings"
 	"time"
@@ -68,7 +69,8 @@ func (t swipeLeft) View(prev string, next string) string {
 
 	// assert that slides are always equal height
 	if len(nextLines) != len(prevLines) {
-		panic("Slides of not equal height")
+		slog.Error("Slides of not equal height")
+		return next
 	}
 
 	for i := range nextLines {
