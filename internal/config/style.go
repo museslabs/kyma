@@ -41,10 +41,25 @@ type GlamourTheme struct {
 }
 
 type StyleConfig struct {
-	Layout      lipgloss.Style  `yaml:"layout"`
-	Border      lipgloss.Border `yaml:"border"`
-	BorderColor string          `yaml:"border_color"`
-	Theme       GlamourTheme    `yaml:"theme"`
+	Layout      *lipgloss.Style  `yaml:"layout"`
+	Border      *lipgloss.Border `yaml:"border"`
+	BorderColor string           `yaml:"border_color"`
+	Theme       *GlamourTheme    `yaml:"theme"`
+}
+
+func (s *StyleConfig) Merge(style StyleConfig) {
+	if style.Layout != nil {
+		s.Layout = style.Layout
+	}
+	if style.Border != nil {
+		s.Border = style.Border
+	}
+	if style.BorderColor != "" {
+		s.BorderColor = style.BorderColor
+	}
+	if style.Theme != nil {
+		s.Theme = style.Theme
+	}
 }
 
 func (s *StyleConfig) DecodeMap(input map[string]any) error {
@@ -59,12 +74,18 @@ func (s *StyleConfig) DecodeMap(input map[string]any) error {
 		return err
 	}
 
-	var err error
-	s.Layout, err = getLayout(aux.Layout)
+	layout, err, ok := getLayout(aux.Layout)
 	if err != nil {
 		return err
 	}
-	s.Border = getBorder(aux.Border)
+	if ok {
+		s.Layout = &layout
+	}
+
+	if border, ok := getBorder(aux.Border); ok {
+		s.Border = &border
+	}
+
 	s.BorderColor = aux.BorderColor
 	s.Theme = getTheme(aux.Theme)
 
@@ -85,12 +106,18 @@ func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
 		return err
 	}
 
-	s.Layout, err = getLayout(aux.Layout)
+	layout, err, ok := getLayout(aux.Layout)
 	if err != nil {
 		return err
 	}
+	if ok {
+		s.Layout = &layout
+	}
 
-	s.Border = getBorder(aux.Border)
+	if border, ok := getBorder(aux.Border); ok {
+		s.Border = &border
+	}
+
 	s.BorderColor = aux.BorderColor
 	s.Theme = getTheme(aux.Theme)
 
@@ -100,8 +127,13 @@ func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
 func (s StyleConfig) Apply(width, height int) SlideStyle {
 	borderColor := DefaultBorderColor
 
-	if s.Theme.Style.H1.BackgroundColor != nil {
-		borderColor = *s.Theme.Style.H1.BackgroundColor
+	theme := GlamourTheme{Style: glamourStyles.DarkStyleConfig, Name: "dark"}
+	if s.Theme != nil {
+		theme = *s.Theme
+	}
+
+	if theme.Style.H1.BackgroundColor != nil {
+		borderColor = *theme.Style.H1.BackgroundColor
 	}
 
 	if s.BorderColor != "" {
@@ -112,88 +144,96 @@ func (s StyleConfig) Apply(width, height int) SlideStyle {
 		borderColor = DefaultBorderColor
 	}
 
-	style := s.Layout.
-		Border(s.Border).
+	layout := lipgloss.NewStyle()
+	if s.Layout != nil {
+		layout = *s.Layout
+	}
+
+	border := lipgloss.RoundedBorder()
+	if s.Border != nil {
+		border = *s.Border
+	}
+
+	style := layout.
+		Border(border).
 		BorderForeground(lipgloss.Color(borderColor)).
 		Width(width - 2).
 		Height(height - 2)
 
 	return SlideStyle{
 		LipGlossStyle: style,
-		Theme:         s.Theme,
+		Theme:         theme,
 	}
 }
 
-func getBorder(border string) lipgloss.Border {
+func getBorder(border string) (lipgloss.Border, bool) {
 	switch border {
 	case "rounded":
-		return lipgloss.RoundedBorder()
+		return lipgloss.RoundedBorder(), true
 	case "double":
-		return lipgloss.DoubleBorder()
+		return lipgloss.DoubleBorder(), true
 	case "thick":
-		return lipgloss.ThickBorder()
+		return lipgloss.ThickBorder(), true
 	case "hidden":
-		return lipgloss.HiddenBorder()
+		return lipgloss.HiddenBorder(), true
 	case "block":
-		return lipgloss.BlockBorder()
+		return lipgloss.BlockBorder(), true
 	case "innerHalfBlock":
-		return lipgloss.InnerHalfBlockBorder()
+		return lipgloss.InnerHalfBlockBorder(), true
 	case "outerHalfBlock":
-		return lipgloss.OuterHalfBlockBorder()
+		return lipgloss.OuterHalfBlockBorder(), true
 	case "normal":
-		return lipgloss.NormalBorder()
+		return lipgloss.NormalBorder(), true
 	default:
-		return lipgloss.Border{}
+		return lipgloss.Border{}, false
 	}
 }
 
-func getLayout(layout string) (lipgloss.Style, error) {
-	style := lipgloss.NewStyle()
-
+func getLayout(layout string) (lipgloss.Style, error, bool) {
 	layout = strings.TrimSpace(layout)
 	if layout == "" {
-		return style, nil
+		return lipgloss.Style{}, nil, false
 	}
 
 	positions := strings.Split(layout, ",")
 	if len(positions) > 2 {
-		return style, fmt.Errorf("invalid layout configuration: %s", layout)
+		return lipgloss.Style{}, fmt.Errorf("invalid layout configuration: %s", layout), false
 	}
 
 	p1, err := getLayoutPosition(positions[0])
 	if err != nil {
-		return style, err
+		return lipgloss.Style{}, err, false
 	}
 
 	if len(positions) == 1 {
-		return style.Align(p1, p1), nil
+		return lipgloss.NewStyle().Align(p1, p1), nil, true
 	}
 
 	p2, err := getLayoutPosition(positions[1])
 	if err != nil {
-		return style, err
+		return lipgloss.Style{}, err, false
 	}
 
-	return style.Align(p1, p2), nil
+	return lipgloss.NewStyle().Align(p1, p2), nil, true
 }
 
-func getTheme(theme string) GlamourTheme {
+func getTheme(theme string) *GlamourTheme {
 	style, ok := glamourStyles.DefaultStyles[theme]
 	if !ok {
 		jsonBytes, err := os.ReadFile(theme)
 		if err != nil {
-			return GlamourTheme{Style: glamourStyles.DarkStyleConfig, Name: "dark"}
+			return nil
 		}
 
 		var customStyle ansi.StyleConfig
 		if err := json.Unmarshal(jsonBytes, &customStyle); err != nil {
-			return GlamourTheme{Style: glamourStyles.DarkStyleConfig, Name: "dark"}
+			return nil
 		}
 
-		return GlamourTheme{Style: customStyle, Name: theme}
+		return &GlamourTheme{Style: customStyle, Name: theme}
 	}
 
-	return GlamourTheme{Style: *style, Name: theme}
+	return &GlamourTheme{Style: *style, Name: theme}
 }
 
 func getLayoutPosition(p string) (lipgloss.Position, error) {
@@ -223,6 +263,9 @@ func (p *Properties) UnmarshalYAML(bytes []byte) error {
 		ImageBackend string      `yaml:"image_backend"`
 	}{}
 
+	if err := aux.Style.UnmarshalYAML(bytes); err != nil {
+		return err
+	}
 	if err := yaml.Unmarshal(bytes, &aux); err != nil {
 		return err
 	}
@@ -236,26 +279,16 @@ func (p *Properties) UnmarshalYAML(bytes []byte) error {
 		if !ok {
 			return fmt.Errorf("preset %s does not exist", aux.Preset)
 		}
+		preset.Style.Merge(aux.Style)
 		p.Style = preset.Style
 		p.Transition = preset.Transition
 	} else {
-		p.Style = aux.Style
+		style := GlobalConfig.Global.Style
+		style.Merge(aux.Style)
+		p.Style = style
 		p.Transition = transitions.Get(aux.Transition, transitions.Fps)
 	}
 
-	if p.Style.Layout.GetAlignHorizontal() == lipgloss.Left ||
-		p.Style.Layout.GetAlignVertical() == lipgloss.Top { // The default
-		p.Style.Layout = GlobalConfig.Global.Style.Layout
-	}
-	if p.Style.Border == (lipgloss.Border{}) {
-		p.Style.Border = GlobalConfig.Global.Style.Border
-	}
-	if p.Style.BorderColor == "" {
-		p.Style.BorderColor = GlobalConfig.Global.Style.BorderColor
-	}
-	if p.Style.Theme.Name == "" {
-		p.Style.Theme = GlobalConfig.Global.Style.Theme
-	}
 	if p.Transition == nil {
 		p.Transition = GlobalConfig.Global.Transition
 	}
@@ -327,7 +360,11 @@ func GetChromaStyle(themeName string) *chroma.Style {
 		return chromaStyle
 	}
 
-	styleConfig := getTheme(themeName)
+	styleConfig := GlamourTheme{Style: glamourStyles.DarkStyleConfig, Name: "dark"}
+	if theme := getTheme(themeName); theme != nil {
+		styleConfig = *theme
+	}
+
 	style := styleConfig.Style
 
 	if style.CodeBlock.Chroma != nil {
