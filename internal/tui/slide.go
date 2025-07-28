@@ -28,7 +28,7 @@ type UpdateSlidesMsg struct {
 
 func NewSlide(data string, props config.Properties) (*Slide, error) {
 	themeName := "dark"
-	if props.Style.Theme.Name != "" {
+	if props.Style.Theme != nil && props.Style.Theme.Name != "" {
 		themeName = props.Style.Theme.Name
 	}
 
