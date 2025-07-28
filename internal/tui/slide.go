@@ -49,11 +49,7 @@ func (s *Slide) Update() (*Slide, tea.Cmd) {
 	transition, cmd := s.ActiveTransition.Update()
 	s.ActiveTransition = transition
 
-	// Update timer
-	// var timerCmd tea.Cmd
-	// s.Timer, timerCmd = s.Timer.Update(TimerTickMsg{})
-
-	return s, tea.Batch(cmd)
+	return s, cmd
 }
 
 func (s *Slide) View(animating bool) string {
