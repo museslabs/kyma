@@ -3,6 +3,7 @@ title: Welcome
 image_backend: docs
 style:
   border: hidden
+  theme: dark
 ---
 
 ![img|43x10](kyma_logo.png)
@@ -90,6 +91,7 @@ style:
 title: Style usage
 style:
   border: hidden
+  theme: dracula
 transition: swipeLeft
 ---
 
@@ -110,7 +112,8 @@ style:
 ----
 ---
 title: Config
-preset: dark
+style:
+  theme: dracula
 ---
 
 # Configuration
@@ -143,6 +146,8 @@ presets:
 ----
 ---
 title: Global styles
+style:
+  theme: dracula
 ---
 
 # Global styles
@@ -175,6 +180,8 @@ presets:
 ----
 ---
 title: Presets
+style:
+  theme: dracula
 ---
 
 # Presets
@@ -207,6 +214,8 @@ presets:
 ----
 ---
 title: More ways to navigate
+style:
+  theme: dracula
 ---
 
 # More ways to navigate
@@ -221,6 +230,8 @@ title: More ways to navigate
 title: Achievements
 transition: swipeLeft
 image_backend: docs
+style:
+  theme: dracula
 ---
 
 # Achievements
