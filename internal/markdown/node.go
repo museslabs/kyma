@@ -11,49 +11,56 @@ const (
 	NodeKindGlamour NodeKind = iota
 	NodeKindImage
 	NodeKindCodeBlock
+	NodeKindGrid
+	NodeKindGridColumn
 )
 
 type Node interface {
 	fmt.Stringer
 
 	Kind() NodeKind
-	Next() Node
-	SetNext(Node)
+	Children() []Node
+	AddChild(Node)
 }
 
 func Dump(n Node) string {
 	var b strings.Builder
+	dumpNode(n, 0, &b)
+	return b.String()
+}
 
-	indent := 0
-	for n != nil {
-		b.WriteString(strings.ReplaceAll(n.String(), "\n", "\\n"))
-
-		n = n.Next()
-		if n != nil {
-			b.WriteString("\n" + strings.Repeat("  ", indent) + "└-")
-		}
-		indent++
+func dumpNode(n Node, indent int, b *strings.Builder) {
+	if n == nil {
+		return
 	}
 
-	return b.String()
+	b.WriteString(strings.ReplaceAll(n.String(), "\n", "\\n"))
+
+	for _, c := range n.Children() {
+		if c != nil {
+			b.WriteString("\n" + strings.Repeat("  ", indent) + "└-")
+			indent++
+		}
+		dumpNode(c, indent, b)
+	}
 }
 
 type GlamourNode struct {
 	Text string
 
-	next Node
+	children []Node
 }
 
 func (n GlamourNode) Kind() NodeKind {
 	return NodeKindGlamour
 }
 
-func (n GlamourNode) Next() Node {
-	return n.next
+func (n GlamourNode) Children() []Node {
+	return n.children
 }
 
-func (n *GlamourNode) SetNext(node Node) {
-	n.next = node
+func (n *GlamourNode) AddChild(node Node) {
+	n.children = append(n.children, node)
 }
 
 func (n GlamourNode) String() string {
@@ -66,19 +73,19 @@ type ImageNode struct {
 	Width  int
 	Height int
 
-	next Node
+	children []Node
 }
 
 func (n ImageNode) Kind() NodeKind {
 	return NodeKindImage
 }
 
-func (n ImageNode) Next() Node {
-	return n.next
+func (n ImageNode) Children() []Node {
+	return n.children
 }
 
-func (n *ImageNode) SetNext(node Node) {
-	n.next = node
+func (n *ImageNode) AddChild(node Node) {
+	n.children = append(n.children, node)
 }
 
 func (n ImageNode) String() string {
@@ -103,19 +110,19 @@ type CodeBlockNode struct {
 	StartLine       int
 	Code            string
 
-	next Node
+	children []Node
 }
 
 func (n CodeBlockNode) Kind() NodeKind {
 	return NodeKindCodeBlock
 }
 
-func (n CodeBlockNode) Next() Node {
-	return n.next
+func (n CodeBlockNode) Children() []Node {
+	return n.children
 }
 
-func (n *CodeBlockNode) SetNext(node Node) {
-	n.next = node
+func (n *CodeBlockNode) AddChild(node Node) {
+	n.children = append(n.children, node)
 }
 
 func (n CodeBlockNode) String() string {
@@ -127,4 +134,48 @@ func (n CodeBlockNode) String() string {
 		n.StartLine,
 		n.Code,
 	)
+}
+
+type GridNode struct {
+	ColumnCount int
+
+	children []Node
+}
+
+func (n GridNode) Kind() NodeKind {
+	return NodeKindGrid
+}
+
+func (n GridNode) Children() []Node {
+	return n.children
+}
+
+func (n *GridNode) AddChild(node Node) {
+	n.children = append(n.children, node)
+}
+
+func (n GridNode) String() string {
+	return fmt.Sprintf(`GridNode(ColumnCount: %d)`, n.ColumnCount)
+}
+
+type GridColumnNode struct {
+	Span int
+
+	children []Node
+}
+
+func (n GridColumnNode) Kind() NodeKind {
+	return NodeKindGridColumn
+}
+
+func (n GridColumnNode) Children() []Node {
+	return n.children
+}
+
+func (n *GridColumnNode) AddChild(node Node) {
+	n.children = append(n.children, node)
+}
+
+func (n GridColumnNode) String() string {
+	return fmt.Sprintf(`GridColumnNode(Span: %d)`, n.Span)
 }
