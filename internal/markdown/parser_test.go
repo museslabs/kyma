@@ -18,10 +18,10 @@ func TestMarkdownParser_Parse(t *testing.T) {
 			in:   []byte("# This is a string\n![alt text](./image.png)"),
 			want: &GlamourNode{
 				Text: "# This is a string\n",
-				next: &ImageNode{
+				children: []Node{&ImageNode{
 					Label: "alt text",
 					Path:  "./image.png",
-				},
+				}},
 			},
 		},
 		{
@@ -29,11 +29,13 @@ func TestMarkdownParser_Parse(t *testing.T) {
 			in:   []byte("# This is a string\n![alt text](./image.png)\n> Some other string"),
 			want: &GlamourNode{
 				Text: "# This is a string\n",
-				next: &ImageNode{
-					Label: "alt text",
-					Path:  "./image.png",
-					next: &GlamourNode{
-						Text: "\n> Some other string",
+				children: []Node{
+					&ImageNode{
+						Label: "alt text",
+						Path:  "./image.png",
+						children: []Node{&GlamourNode{
+							Text: "\n> Some other string",
+						}},
 					},
 				},
 			},

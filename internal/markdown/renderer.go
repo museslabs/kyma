@@ -67,75 +67,91 @@ func (r *Renderer) RenderBytes(in []byte, animating bool) (string, error) {
 		b.WriteString("\x1b_Ga=d\x1b\\")
 	}
 
-	for n := r.parser.Parse(in); n != nil; n = n.Next() {
-		switch n.Kind() {
-		case NodeKindGlamour:
-			n := n.(*GlamourNode)
-			out, err := r.tr.Render(n.Text)
-			if err != nil {
-				return "", err
-			}
-			b.WriteString(out)
-
-		case NodeKindImage:
-			n := n.(*ImageNode)
-
-			limg, err := r.options.imgBackend.Render(n.Path, n.Width, n.Height, true)
-			if err != nil {
-				b.WriteString(fmt.Sprintf("[Error rendering image: %s]", n.Label))
-				continue
-			}
-
-			if r.options.imgBackend.SymbolsOnly() {
-				b.WriteString(limg)
-				continue
-			}
-
-			himg, err := r.options.imgBackend.Render(n.Path, n.Width, n.Height, false)
-			if err != nil {
-				b.WriteString(fmt.Sprintf("[Error rendering image: %s]", n.Label))
-				continue
-			}
-
-			if !animating {
-				b.WriteString(ansi.SaveCursor)
-				b.WriteString(limg)
-				b.WriteString(ansi.RestoreCursor)
-				b.WriteString(himg)
-			} else {
-				b.WriteString(limg)
-			}
-
-		case NodeKindCodeBlock:
-			n := n.(*CodeBlockNode)
-
-			lines := strings.Split(n.Code, "\n")
-
-			var renderedContent string
-			if n.Language != "" {
-				lexer := lexers.Get(n.Language)
-				if lexer == nil {
-					lexer = lexers.Fallback
-				}
-				lexer = chroma.Coalesce(lexer)
-				style := config.GetChromaStyle(r.options.theme)
-
-				renderedContent = r.renderHighlightedCode(n.Code, lines, n, lexer, style)
-			} else {
-				renderedContent = r.renderPlainCode(lines, n)
-			}
-
-			// Apply consistent styling
-			codeStyle := lipgloss.NewStyle().Width(78)
-
-			b.WriteString(codeStyle.Render(renderedContent))
-
-		default:
-			return "", fmt.Errorf("invalid node kind: %d", n.Kind())
-		}
+	if err := r.renderNode(r.parser.Parse(in), animating, &b); err != nil {
+		return "", err
 	}
 
 	return b.String(), nil
+}
+
+func (r *Renderer) renderNode(n Node, animating bool, b *strings.Builder) error {
+	if n == nil {
+		return nil
+	}
+
+	switch n.Kind() {
+	case NodeKindGlamour:
+		n := n.(*GlamourNode)
+		out, err := r.tr.Render(n.Text)
+		if err != nil {
+			return err
+		}
+		b.WriteString(out)
+
+	case NodeKindImage:
+		n := n.(*ImageNode)
+
+		limg, err := r.options.imgBackend.Render(n.Path, n.Width, n.Height, true)
+		if err != nil {
+			fmt.Fprintf(b, "[Error rendering image: %s]", n.Label)
+			break
+		}
+
+		if r.options.imgBackend.SymbolsOnly() {
+			b.WriteString(limg)
+			break
+		}
+
+		himg, err := r.options.imgBackend.Render(n.Path, n.Width, n.Height, false)
+		if err != nil {
+			fmt.Fprintf(b, "[Error rendering image: %s]", n.Label)
+			break
+		}
+
+		if !animating {
+			b.WriteString(ansi.SaveCursor)
+			b.WriteString(limg)
+			b.WriteString(ansi.RestoreCursor)
+			b.WriteString(himg)
+		} else {
+			b.WriteString(limg)
+		}
+
+	case NodeKindCodeBlock:
+		n := n.(*CodeBlockNode)
+
+		lines := strings.Split(n.Code, "\n")
+
+		var renderedContent string
+		if n.Language != "" {
+			lexer := lexers.Get(n.Language)
+			if lexer == nil {
+				lexer = lexers.Fallback
+			}
+			lexer = chroma.Coalesce(lexer)
+			style := config.GetChromaStyle(r.options.theme)
+
+			renderedContent = r.renderHighlightedCode(n.Code, lines, n, lexer, style)
+		} else {
+			renderedContent = r.renderPlainCode(lines, n)
+		}
+
+		// Apply consistent styling
+		codeStyle := lipgloss.NewStyle().Width(78)
+
+		b.WriteString(codeStyle.Render(renderedContent))
+
+	default:
+		return fmt.Errorf("invalid node kind: %d", n.Kind())
+	}
+
+	for _, c := range n.Children() {
+		if err := r.renderNode(c, animating, b); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func WithImageBackend(backend string) RendererOption {
