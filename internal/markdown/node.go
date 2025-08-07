@@ -11,6 +11,8 @@ const (
 	NodeKindGlamour NodeKind = iota
 	NodeKindImage
 	NodeKindCodeBlock
+	NodeKindGrid
+	NodeKindGridColumn
 )
 
 type Node interface {
@@ -127,4 +129,48 @@ func (n CodeBlockNode) String() string {
 		n.StartLine,
 		n.Code,
 	)
+}
+
+type GridNode struct {
+	ColumnNum int
+	Columns   []GridColumnNode
+
+	next Node
+}
+
+func (n GridNode) Kind() NodeKind {
+	return NodeKindGrid
+}
+
+func (n GridNode) Next() Node {
+	return n.next
+}
+
+func (n *GridNode) SetNext(node Node) {
+	n.next = node
+}
+
+func (n GridNode) String() string {
+	return fmt.Sprintf(`GridNode()`)
+}
+
+type GridColumnNode struct {
+	Data []Node
+	Span int
+}
+
+func (n GridColumnNode) Kind() NodeKind {
+	return NodeKindGridColumn
+}
+
+func (n GridColumnNode) Next() Node {
+	return nil
+}
+
+func (n GridColumnNode) SetNext(_ Node) {
+	panic("")
+}
+
+func (n GridColumnNode) String() string {
+	return fmt.Sprintf(`GridColumnNode()`)
 }
