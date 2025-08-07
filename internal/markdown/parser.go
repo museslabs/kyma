@@ -88,8 +88,9 @@ func (p MarkdownParser) Parse(in []byte) Node {
 					root = &GlamourNode{Text: chunk.String()}
 					curr = root
 				} else {
-					curr.SetNext(&GlamourNode{Text: chunk.String()})
-					curr = curr.Next()
+					node := &GlamourNode{Text: chunk.String()}
+					curr.AddChild(node)
+					curr = node
 				}
 			}
 
@@ -99,8 +100,8 @@ func (p MarkdownParser) Parse(in []byte) Node {
 				root = n
 				curr = root
 			} else {
-				curr.SetNext(n)
-				curr = curr.Next()
+				curr.AddChild(n)
+				curr = n
 			}
 
 			parsed = true
@@ -114,7 +115,7 @@ func (p MarkdownParser) Parse(in []byte) Node {
 		if root == nil {
 			root = &GlamourNode{Text: chunk.String()}
 		} else {
-			curr.SetNext(&GlamourNode{Text: chunk.String()})
+			curr.AddChild(&GlamourNode{Text: chunk.String()})
 		}
 	}
 
