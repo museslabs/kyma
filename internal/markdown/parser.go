@@ -45,19 +45,18 @@ func (p *MarkdownParser) Register(parser PrioritizedValue[Parser]) {
 	}
 }
 
-// Parse processes the input byte-by-byte and constructs a [Node] list,
+// Parse processes the input byte-by-byte and constructs a [Node] tree,
 // starting from a root [Node]. For each byte, it checks for registered Parsers
 // triggered by that byte and attempts to parse using them. If no parser succeeds,
 // the byte is added to a buffer. Buffered text is eventually wrapped in a
 // [GlamourNode], the default [Node] type.
 func (p MarkdownParser) Parse(in []byte) Node {
 	r := bytes.NewReader(in)
+	return p.parse(r, &MarkdownRootNode{})
+}
 
-	var (
-		root  Node
-		curr  Node
-		chunk bytes.Buffer
-	)
+func (p MarkdownParser) parse(r *bytes.Reader, root Node) Node {
+	var chunk bytes.Buffer
 
 	for {
 		b, err := r.ReadByte()
@@ -84,26 +83,11 @@ func (p MarkdownParser) Parse(in []byte) Node {
 			}
 
 			if chunk.String() != "" {
-				if root == nil {
-					root = &GlamourNode{Text: chunk.String()}
-					curr = root
-				} else {
-					node := &GlamourNode{Text: chunk.String()}
-					curr.AddChild(node)
-					curr = node
-				}
+				root.AddChild(&GlamourNode{Text: chunk.String()})
+				chunk.Reset()
 			}
 
-			chunk.Reset()
-
-			if root == nil {
-				root = n
-				curr = root
-			} else {
-				curr.AddChild(n)
-				curr = n
-			}
-
+			root.AddChild(n)
 			parsed = true
 		}
 		if !parsed {
@@ -112,11 +96,7 @@ func (p MarkdownParser) Parse(in []byte) Node {
 	}
 
 	if chunk.String() != "" {
-		if root == nil {
-			root = &GlamourNode{Text: chunk.String()}
-		} else {
-			curr.AddChild(&GlamourNode{Text: chunk.String()})
-		}
+		root.AddChild(&GlamourNode{Text: chunk.String()})
 	}
 
 	return root
