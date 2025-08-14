@@ -58,7 +58,7 @@ func TestDump(t *testing.T) {
 						},
 					}}},
 			want: `GlamourNode(Text: "test")
-└-GridNode(ColumnNum: 3)
+└-GridNode(ColumnCount: 3)
   |-GridColumnNode(Span: 1)
   | |-GlamourNode(Text: "Col1")
   | | └-GlamourNode(Text: "Col1Nest")
