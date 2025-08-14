@@ -8,7 +8,8 @@ import (
 type NodeKind uint8
 
 const (
-	NodeKindGlamour NodeKind = iota
+	NodeKindMarkdownRoot NodeKind = iota
+	NodeKindGlamour
 	NodeKindImage
 	NodeKindCodeBlock
 	NodeKindGrid
@@ -51,6 +52,26 @@ func dumpNode(n Node, prefix string, b *strings.Builder) {
 			dumpNode(c, prefix+"| ", b)
 		}
 	}
+}
+
+type MarkdownRootNode struct {
+	children []Node
+}
+
+func (n MarkdownRootNode) Kind() NodeKind {
+	return NodeKindMarkdownRoot
+}
+
+func (n MarkdownRootNode) Children() []Node {
+	return n.children
+}
+
+func (n *MarkdownRootNode) AddChild(node Node) {
+	n.children = append(n.children, node)
+}
+
+func (n MarkdownRootNode) String() string {
+	return "MarkdownRootNode()"
 }
 
 type GlamourNode struct {
@@ -148,6 +169,7 @@ type GridNode struct {
 	ColumnCount int
 
 	children []Node
+	closing  bool
 }
 
 func (n GridNode) Kind() NodeKind {
@@ -170,6 +192,7 @@ type GridColumnNode struct {
 	Span int
 
 	children []Node
+	closing  bool
 }
 
 func (n GridColumnNode) Kind() NodeKind {
