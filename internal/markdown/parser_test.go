@@ -11,41 +11,39 @@ func TestMarkdownParser_Parse(t *testing.T) {
 		{
 			name: "Basic single node",
 			in:   []byte("# This is a string"),
-			want: &GlamourNode{Text: "# This is a string"},
+			want: &MarkdownRootNode{children: []Node{
+				&GlamourNode{Text: "# This is a string"},
+			}},
 		},
 		{
 			name: "Text followed by image",
 			in:   []byte("# This is a string\n![alt text](./image.png)"),
-			want: &GlamourNode{
-				Text: "# This is a string\n",
-				children: []Node{&ImageNode{
-					Label: "alt text",
-					Path:  "./image.png",
-				}},
+			want: &MarkdownRootNode{
+				children: []Node{
+					&GlamourNode{Text: "# This is a string\n"},
+					&ImageNode{Label: "alt text", Path: "./image.png"},
+				},
 			},
 		},
 		{
 			name: "Image in between text",
 			in:   []byte("# This is a string\n![alt text](./image.png)\n> Some other string"),
-			want: &GlamourNode{
-				Text: "# This is a string\n",
+			want: &MarkdownRootNode{
 				children: []Node{
-					&ImageNode{
-						Label: "alt text",
-						Path:  "./image.png",
-						children: []Node{&GlamourNode{
-							Text: "\n> Some other string",
-						}},
-					},
+					&GlamourNode{Text: "# This is a string\n"},
+					&ImageNode{Label: "alt text", Path: "./image.png"},
+					&GlamourNode{Text: "\n> Some other string"},
 				},
 			},
 		},
 		{
 			name: "Try parse invalid image node",
 			in:   []byte("# This is a string\n![not_an_image\n> Some other string"),
-			want: &GlamourNode{
-				Text: "# This is a string\n![not_an_image\n> Some other string",
-			},
+			want: &MarkdownRootNode{children: []Node{
+				&GlamourNode{
+					Text: "# This is a string\n![not_an_image\n> Some other string",
+				},
+			}},
 		},
 	}
 	for _, tt := range tests {

@@ -80,6 +80,9 @@ func (r *Renderer) renderNode(n Node, animating bool, b *strings.Builder) error 
 	}
 
 	switch n.Kind() {
+	case NodeKindMarkdownRoot:
+		break
+
 	case NodeKindGlamour:
 		n := n.(*GlamourNode)
 		out, err := r.tr.Render(n.Text)
