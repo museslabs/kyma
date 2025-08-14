@@ -25,23 +25,31 @@ type Node interface {
 
 func Dump(n Node) string {
 	var b strings.Builder
-	dumpNode(n, 0, &b)
+	dumpNode(n, "", &b)
 	return b.String()
 }
 
-func dumpNode(n Node, indent int, b *strings.Builder) {
+func dumpNode(n Node, prefix string, b *strings.Builder) {
 	if n == nil {
 		return
 	}
 
 	b.WriteString(strings.ReplaceAll(n.String(), "\n", "\\n"))
 
-	for _, c := range n.Children() {
-		if c != nil {
-			b.WriteString("\n" + strings.Repeat("  ", indent) + "└-")
-			indent++
+	for i, c := range n.Children() {
+		if c == nil {
+			continue
 		}
-		dumpNode(c, indent, b)
+
+		b.WriteString("\n" + prefix)
+
+		if i == len(n.Children())-1 {
+			b.WriteString("└-")
+			dumpNode(c, prefix+"  ", b)
+		} else {
+			b.WriteString("|-")
+			dumpNode(c, prefix+"| ", b)
+		}
 	}
 }
 
