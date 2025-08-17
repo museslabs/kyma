@@ -22,10 +22,10 @@ func TestDump(t *testing.T) {
 					&GlamourNode{Text: "test2"},
 				},
 			},
-			want: `MarkdownRootNode()
-|-GlamourNode(Text: "test")
-|-ImageNode(Label: "img", Path: "./image.png", Width: 100, Height: 50)
-└-GlamourNode(Text: "test2")`,
+			want: `MarkdownRoot()
+|-Glamour(Text: "test")
+|-Image(Label: "img", Path: "./image.png", Width: 100, Height: 50)
+└-Glamour(Text: "test2")`,
 		},
 		{
 			name: "grid",
@@ -54,16 +54,16 @@ func TestDump(t *testing.T) {
 					&GlamourNode{Text: "test2"},
 				},
 			},
-			want: `MarkdownRootNode()
-|-GlamourNode(Text: "test")
-|-GridNode(ColumnCount: 3)
-| |-GridColumnNode(Span: 1)
-| | |-GlamourNode(Text: "Col1")
-| | └-GlamourNode(Text: "Col1a")
-| └-GridColumnNode(Span: 2)
-|   |-GlamourNode(Text: "Col2")
-|   └-GlamourNode(Text: "Col2a")
-└-GlamourNode(Text: "test2")`,
+			want: `MarkdownRoot()
+|-Glamour(Text: "test")
+|-Grid(ColumnCount: 3)
+| |-GridColumn(Span: 1)
+| | |-Glamour(Text: "Col1")
+| | └-Glamour(Text: "Col1a")
+| └-GridColumn(Span: 2)
+|   |-Glamour(Text: "Col2")
+|   └-Glamour(Text: "Col2a")
+└-Glamour(Text: "test2")`,
 		},
 	}
 	for _, tt := range tests {

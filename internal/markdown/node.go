@@ -71,7 +71,7 @@ func (n *MarkdownRootNode) AddChild(node Node) {
 }
 
 func (n MarkdownRootNode) String() string {
-	return "MarkdownRootNode()"
+	return "MarkdownRoot()"
 }
 
 type GlamourNode struct {
@@ -93,7 +93,7 @@ func (n *GlamourNode) AddChild(node Node) {
 }
 
 func (n GlamourNode) String() string {
-	return fmt.Sprintf(`GlamourNode(Text: "%s")`, n.Text)
+	return fmt.Sprintf(`Glamour(Text: "%s")`, n.Text)
 }
 
 type ImageNode struct {
@@ -119,7 +119,7 @@ func (n *ImageNode) AddChild(node Node) {
 
 func (n ImageNode) String() string {
 	return fmt.Sprintf(
-		`ImageNode(Label: "%s", Path: "%s", Width: %d, Height: %d)`,
+		`Image(Label: "%s", Path: "%s", Width: %d, Height: %d)`,
 		n.Label,
 		n.Path,
 		n.Width,
@@ -156,7 +156,7 @@ func (n *CodeBlockNode) AddChild(node Node) {
 
 func (n CodeBlockNode) String() string {
 	return fmt.Sprintf(
-		`CodeBlockNode(Language: %s, Ranges: %v, ShowLineNumbers: %t, StartLine: %d, Code: %s)`,
+		`CodeBlock(Language: %s, Ranges: %v, ShowLineNumbers: %t, StartLine: %d, Code: %s)`,
 		n.Language,
 		n.Ranges,
 		n.ShowLineNumbers,
@@ -169,7 +169,6 @@ type GridNode struct {
 	ColumnCount int
 
 	children []Node
-	closing  bool
 }
 
 func (n GridNode) Kind() NodeKind {
@@ -185,14 +184,13 @@ func (n *GridNode) AddChild(node Node) {
 }
 
 func (n GridNode) String() string {
-	return fmt.Sprintf(`GridNode(ColumnCount: %d)`, n.ColumnCount)
+	return fmt.Sprintf(`Grid(ColumnCount: %d)`, n.ColumnCount)
 }
 
 type GridColumnNode struct {
 	Span int
 
 	children []Node
-	closing  bool
 }
 
 func (n GridColumnNode) Kind() NodeKind {
@@ -208,5 +206,5 @@ func (n *GridColumnNode) AddChild(node Node) {
 }
 
 func (n GridColumnNode) String() string {
-	return fmt.Sprintf(`GridColumnNode(Span: %d)`, n.Span)
+	return fmt.Sprintf(`GridColumn(Span: %d)`, n.Span)
 }
