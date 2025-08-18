@@ -49,7 +49,7 @@ func TestImageParser_Parse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			p := NewImageParser()
 
-			got := p.Parse(bytes.NewReader(tt.in))
+			got := p.Parse(bytes.NewReader(tt.in), nil)
 			if Dump(got) != Dump(tt.want) {
 				t.Errorf("Parse() got:\n%s\nwant:\n%s", Dump(got), Dump(tt.want))
 			}

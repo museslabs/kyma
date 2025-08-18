@@ -21,7 +21,7 @@ func (p ImageParser) Trigger() []byte {
 // Parse attempts to extract an [ImageNode] from the input, matching the markdown
 // image syntax: [alt text|widthxheight](image-path) where width and height
 // values are optional.
-func (p ImageParser) Parse(r *bytes.Reader) Node {
+func (p ImageParser) Parse(r *bytes.Reader, _ *MarkdownParser) Node {
 	var altText bytes.Buffer
 
 	b, err := r.ReadByte()
