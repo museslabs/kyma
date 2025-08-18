@@ -33,7 +33,7 @@ func (p CodeBlockParser) Trigger() []byte {
 //	  return 0;
 //	}
 //	```
-func (p *CodeBlockParser) Parse(r *bytes.Reader) Node {
+func (p *CodeBlockParser) Parse(r *bytes.Reader, _ *MarkdownParser) Node {
 	for range 2 {
 		if b, err := r.ReadByte(); err != nil || b != '`' {
 			slog.Warn("failed to parse codeblock node")

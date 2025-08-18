@@ -18,7 +18,7 @@ type Parser interface {
 	// Parse attempts to parse a [Node] from the reader. It should return nil if
 	// parsing fails, allowing [MarkdownParser.Parse] to try the next parser.
 	// Note: The trigger byte has already been consumed before calling Parse.
-	Parse(r *bytes.Reader) Node
+	Parse(r *bytes.Reader, m *MarkdownParser) Node
 }
 
 // MarkdownParser is an extensible parser that converts a markdown string into
@@ -76,7 +76,7 @@ func (p MarkdownParser) parse(r *bytes.Reader, root Node) Node {
 		parsed := false
 		for _, parser := range parsers {
 			markedPos, _ := r.Seek(0, io.SeekCurrent)
-			n := parser.Value.Parse(r)
+			n := parser.Value.Parse(r, &p)
 			if n == nil {
 				_, _ = r.Seek(markedPos, io.SeekStart)
 				continue
