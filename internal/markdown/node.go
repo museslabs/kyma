@@ -180,6 +180,9 @@ func (n GridNode) Children() []Node {
 }
 
 func (n *GridNode) AddChild(node Node) {
+	if node.Kind() != NodeKindGridColumn {
+		return
+	}
 	n.children = append(n.children, node)
 }
 
