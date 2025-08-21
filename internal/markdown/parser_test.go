@@ -45,12 +45,51 @@ func TestMarkdownParser_Parse(t *testing.T) {
 				},
 			}},
 		},
+		{
+			name: "Valid grid layout",
+			in: []byte(`# This is a string
+[grid]
+[column]# Some other text[/column]
+
+[column]
+![image](./image.png)
+[/column]
+
+[column]
+# Some other column stuff
+[/column]
+[/grid]
+
+> And another string`),
+			want: &MarkdownRootNode{
+				children: []Node{
+					&GlamourNode{Text: "# This is a string\n"},
+					&GridNode{
+						children: []Node{
+							&GridColumnNode{children: []Node{&GlamourNode{
+								Text: "# Some other text",
+							}}},
+							&GridColumnNode{children: []Node{&ImageNode{
+								Label: "image",
+								Path:  "./image.png",
+							}}},
+							&GridColumnNode{children: []Node{&GlamourNode{
+								Text: "# Some other column stuff",
+							}}},
+						},
+					},
+					&GlamourNode{Text: "> And another string"},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := NewMarkdownParser()
 			p.Register(Prioritized[Parser](NewImageParser(), 1))
 			p.Register(Prioritized[Parser](NewCodeBlockParser(), 1))
+			p.Register(Prioritized[Parser](NewGridParser(), 1))
+			p.Register(Prioritized[Parser](NewGridColumnParser(), 2))
 
 			got := p.Parse(tt.in)
 			if Dump(got) != Dump(tt.want) {
