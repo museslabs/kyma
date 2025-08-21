@@ -46,18 +46,15 @@ func (p *MarkdownParser) Register(parser PrioritizedValue[Parser]) {
 }
 
 // Parse processes the input byte-by-byte and constructs a [Node] tree,
-// starting from a root [Node]. For each byte, it checks for registered Parsers
+// starting from a [MarkdownRootNode]. For each byte, it checks for registered Parsers
 // triggered by that byte and attempts to parse using them. If no parser succeeds,
 // the byte is added to a buffer. Buffered text is eventually wrapped in a
 // [GlamourNode], the default [Node] type.
 func (p MarkdownParser) Parse(in []byte) Node {
 	r := bytes.NewReader(in)
-	return p.parse(r, &MarkdownRootNode{})
-}
+	root := &MarkdownRootNode{}
 
-func (p MarkdownParser) parse(r *bytes.Reader, root Node) Node {
 	var chunk bytes.Buffer
-
 	for {
 		b, err := r.ReadByte()
 		if err != nil {
@@ -67,32 +64,17 @@ func (p MarkdownParser) parse(r *bytes.Reader, root Node) Node {
 			slog.Error("failed advancing reader", slog.Any("error", err))
 		}
 
-		parsers, ok := p.registry[b]
-		if !ok {
+		n := p.parseNode(r, b)
+		if n == nil {
 			chunk.WriteByte(b)
 			continue
 		}
 
-		parsed := false
-		for _, parser := range parsers {
-			markedPos, _ := r.Seek(0, io.SeekCurrent)
-			n := parser.Value.Parse(r, &p)
-			if n == nil {
-				_, _ = r.Seek(markedPos, io.SeekStart)
-				continue
-			}
-
-			if chunk.String() != "" {
-				root.AddChild(&GlamourNode{Text: chunk.String()})
-				chunk.Reset()
-			}
-
-			root.AddChild(n)
-			parsed = true
+		if chunk.String() != "" {
+			root.AddChild(&GlamourNode{Text: chunk.String()})
+			chunk.Reset()
 		}
-		if !parsed {
-			chunk.WriteByte(b)
-		}
+		root.AddChild(n)
 	}
 
 	if chunk.String() != "" {
@@ -100,4 +82,22 @@ func (p MarkdownParser) parse(r *bytes.Reader, root Node) Node {
 	}
 
 	return root
+}
+
+func (p MarkdownParser) parseNode(r *bytes.Reader, b byte) Node {
+	parsers, ok := p.registry[b]
+	if !ok {
+		return nil
+	}
+
+	for _, parser := range parsers {
+		markedPos, _ := r.Seek(0, io.SeekCurrent)
+		n := parser.Value.Parse(r, &p)
+		if n != nil {
+			return n
+		}
+		_, _ = r.Seek(markedPos, io.SeekStart)
+	}
+
+	return nil
 }
