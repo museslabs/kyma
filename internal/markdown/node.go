@@ -22,6 +22,8 @@ type Node interface {
 	Kind() NodeKind
 	Children() []Node
 	AddChild(Node)
+	Parent() Node
+	SetParent(Node)
 }
 
 func Dump(n Node) string {
@@ -54,20 +56,33 @@ func dumpNode(n Node, prefix string, b *strings.Builder) {
 	}
 }
 
-type MarkdownRootNode struct {
+type BaseNode struct {
+	parent   Node
 	children []Node
+}
+
+func (n BaseNode) Children() []Node {
+	return n.children
+}
+
+func (n *BaseNode) AddChild(node Node) {
+	n.children = append(n.children, node)
+}
+
+func (n BaseNode) Parent() Node {
+	return n.parent
+}
+
+func (n *BaseNode) SetParent(node Node) {
+	n.parent = node
+}
+
+type MarkdownRootNode struct {
+	BaseNode
 }
 
 func (n MarkdownRootNode) Kind() NodeKind {
 	return NodeKindMarkdownRoot
-}
-
-func (n MarkdownRootNode) Children() []Node {
-	return n.children
-}
-
-func (n *MarkdownRootNode) AddChild(node Node) {
-	n.children = append(n.children, node)
 }
 
 func (n MarkdownRootNode) String() string {
@@ -75,21 +90,13 @@ func (n MarkdownRootNode) String() string {
 }
 
 type GlamourNode struct {
-	Text string
+	BaseNode
 
-	children []Node
+	Text string
 }
 
 func (n GlamourNode) Kind() NodeKind {
 	return NodeKindGlamour
-}
-
-func (n GlamourNode) Children() []Node {
-	return n.children
-}
-
-func (n *GlamourNode) AddChild(node Node) {
-	n.children = append(n.children, node)
 }
 
 func (n GlamourNode) String() string {
@@ -97,24 +104,16 @@ func (n GlamourNode) String() string {
 }
 
 type ImageNode struct {
+	BaseNode
+
 	Label  string
 	Path   string
 	Width  int
 	Height int
-
-	children []Node
 }
 
 func (n ImageNode) Kind() NodeKind {
 	return NodeKindImage
-}
-
-func (n ImageNode) Children() []Node {
-	return n.children
-}
-
-func (n *ImageNode) AddChild(node Node) {
-	n.children = append(n.children, node)
 }
 
 func (n ImageNode) String() string {
@@ -133,25 +132,17 @@ type CodeBlockLineRange struct {
 }
 
 type CodeBlockNode struct {
+	BaseNode
+
 	Language        string
 	Ranges          []CodeBlockLineRange
 	ShowLineNumbers bool
 	StartLine       int
 	Code            string
-
-	children []Node
 }
 
 func (n CodeBlockNode) Kind() NodeKind {
 	return NodeKindCodeBlock
-}
-
-func (n CodeBlockNode) Children() []Node {
-	return n.children
-}
-
-func (n *CodeBlockNode) AddChild(node Node) {
-	n.children = append(n.children, node)
 }
 
 func (n CodeBlockNode) String() string {
@@ -166,17 +157,13 @@ func (n CodeBlockNode) String() string {
 }
 
 type GridNode struct {
-	ColumnCount int
+	BaseNode
 
-	children []Node
+	ColumnCount int
 }
 
 func (n GridNode) Kind() NodeKind {
 	return NodeKindGrid
-}
-
-func (n GridNode) Children() []Node {
-	return n.children
 }
 
 func (n *GridNode) AddChild(node Node) {
@@ -191,21 +178,13 @@ func (n GridNode) String() string {
 }
 
 type GridColumnNode struct {
-	Span int
+	BaseNode
 
-	children []Node
+	Span int
 }
 
 func (n GridColumnNode) Kind() NodeKind {
 	return NodeKindGridColumn
-}
-
-func (n GridColumnNode) Children() []Node {
-	return n.children
-}
-
-func (n *GridColumnNode) AddChild(node Node) {
-	n.children = append(n.children, node)
 }
 
 func (n GridColumnNode) String() string {

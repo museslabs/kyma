@@ -71,14 +71,19 @@ func (p MarkdownParser) Parse(in []byte) Node {
 		}
 
 		if chunk.String() != "" {
-			root.AddChild(&GlamourNode{Text: chunk.String()})
+			child := &GlamourNode{Text: chunk.String()}
+			child.SetParent(root)
+			root.AddChild(child)
 			chunk.Reset()
 		}
+		n.SetParent(root)
 		root.AddChild(n)
 	}
 
 	if chunk.String() != "" {
-		root.AddChild(&GlamourNode{Text: chunk.String()})
+		child := &GlamourNode{Text: chunk.String()}
+		child.SetParent(root)
+		root.AddChild(child)
 	}
 
 	return root
