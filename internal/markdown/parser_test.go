@@ -11,39 +11,34 @@ func TestMarkdownParser_Parse(t *testing.T) {
 		{
 			name: "Basic single node",
 			in:   []byte("# This is a string"),
-			want: &MarkdownRootNode{children: []Node{
-				&GlamourNode{Text: "# This is a string"},
-			}},
+			want: node(&MarkdownRootNode{}, &GlamourNode{Text: "# This is a string"}),
 		},
 		{
 			name: "Text followed by image",
 			in:   []byte("# This is a string\n![alt text](./image.png)"),
-			want: &MarkdownRootNode{
-				children: []Node{
-					&GlamourNode{Text: "# This is a string\n"},
-					&ImageNode{Label: "alt text", Path: "./image.png"},
-				},
-			},
+			want: node(
+				&MarkdownRootNode{},
+				&GlamourNode{Text: "# This is a string\n"},
+				&ImageNode{Label: "alt text", Path: "./image.png"},
+			),
 		},
 		{
 			name: "Image in between text",
 			in:   []byte("# This is a string\n![alt text](./image.png)\n> Some other string"),
-			want: &MarkdownRootNode{
-				children: []Node{
-					&GlamourNode{Text: "# This is a string\n"},
-					&ImageNode{Label: "alt text", Path: "./image.png"},
-					&GlamourNode{Text: "\n> Some other string"},
-				},
-			},
+			want: node(
+				&MarkdownRootNode{},
+				&GlamourNode{Text: "# This is a string\n"},
+				&ImageNode{Label: "alt text", Path: "./image.png"},
+				&GlamourNode{Text: "\n> Some other string"},
+			),
 		},
 		{
 			name: "Try parse invalid image node",
 			in:   []byte("# This is a string\n![not_an_image\n> Some other string"),
-			want: &MarkdownRootNode{children: []Node{
-				&GlamourNode{
-					Text: "# This is a string\n![not_an_image\n> Some other string",
-				},
-			}},
+			want: node(
+				&MarkdownRootNode{},
+				&GlamourNode{Text: "# This is a string\n![not_an_image\n> Some other string"},
+			),
 		},
 		{
 			name: "Valid grid layout",
@@ -61,26 +56,17 @@ func TestMarkdownParser_Parse(t *testing.T) {
 [/grid]
 
 > And another string`),
-			want: &MarkdownRootNode{
-				children: []Node{
-					&GlamourNode{Text: "# This is a string\n"},
-					&GridNode{
-						children: []Node{
-							&GridColumnNode{children: []Node{&GlamourNode{
-								Text: "# Some other text",
-							}}},
-							&GridColumnNode{children: []Node{&ImageNode{
-								Label: "image",
-								Path:  "./image.png",
-							}}},
-							&GridColumnNode{children: []Node{&GlamourNode{
-								Text: "# Some other column stuff",
-							}}},
-						},
-					},
-					&GlamourNode{Text: "> And another string"},
-				},
-			},
+			want: node(
+				&MarkdownRootNode{},
+				&GlamourNode{Text: "# This is a string\n"},
+				node(
+					&GridNode{},
+					node(&GridColumnNode{}, &GlamourNode{Text: "# Some other text"}),
+					node(&GridColumnNode{}, &ImageNode{Label: "image", Path: "./image.png"}),
+					node(&GridColumnNode{}, &GlamourNode{Text: "# Some other column stuff"}),
+				),
+				&GlamourNode{Text: "> And another string"},
+			),
 		},
 	}
 	for _, tt := range tests {
