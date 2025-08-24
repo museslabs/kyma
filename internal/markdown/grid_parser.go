@@ -60,14 +60,19 @@ func (p GridParser) Parse(r *bytes.Reader, m *MarkdownParser) Node {
 		}
 
 		if c := strings.Trim(chunk.String(), " \n"); c != "" {
-			gridNode.AddChild(&GlamourNode{Text: chunk.String()})
+			child := &GlamourNode{Text: chunk.String()}
+			child.SetParent(gridNode)
+			gridNode.AddChild(child)
 			chunk.Reset()
 		}
+		n.SetParent(gridNode)
 		gridNode.AddChild(n)
 	}
 
 	if c := strings.Trim(chunk.String(), " \n"); c != "" {
-		gridNode.AddChild(&GlamourNode{Text: chunk.String()})
+		child := &GlamourNode{Text: chunk.String()}
+		child.SetParent(gridNode)
+		gridNode.AddChild(child)
 	}
 
 	return gridNode
@@ -126,14 +131,19 @@ func (p GridColumnParser) Parse(r *bytes.Reader, m *MarkdownParser) Node {
 		}
 
 		if c := strings.Trim(chunk.String(), " \n"); c != "" {
-			columnNode.AddChild(&GlamourNode{Text: c})
+			child := &GlamourNode{Text: c}
+			child.SetParent(columnNode)
+			columnNode.AddChild(child)
 			chunk.Reset()
 		}
+		n.SetParent(columnNode)
 		columnNode.AddChild(n)
 	}
 
 	if c := strings.Trim(chunk.String(), " \n"); c != "" {
-		columnNode.AddChild(&GlamourNode{Text: c})
+		child := &GlamourNode{Text: c}
+		child.SetParent(columnNode)
+		columnNode.AddChild(child)
 	}
 
 	return columnNode

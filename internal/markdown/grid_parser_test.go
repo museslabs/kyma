@@ -14,16 +14,11 @@ func TestGridParser_Parse(t *testing.T) {
 		{
 			name: "simple grid",
 			in:   []byte("[grid][column]Some text[/column][column]More text[/column][/grid]"),
-			want: &GridNode{
-				children: []Node{
-					&GridColumnNode{
-						children: []Node{&GlamourNode{Text: "Some text"}},
-					},
-					&GridColumnNode{
-						children: []Node{&GlamourNode{Text: "More text"}},
-					},
-				},
-			},
+			want: node(
+				&GridNode{},
+				node(&GridColumnNode{}, &GlamourNode{Text: "Some text"}),
+				node(&GridColumnNode{}, &GlamourNode{Text: "More text"}),
+			),
 		},
 		{
 			name: "nested grid",
@@ -37,31 +32,15 @@ func TestGridParser_Parse(t *testing.T) {
 [/grid]
 [/column]
 [/grid]`),
-			want: &GridNode{
-				children: []Node{
-					&GridColumnNode{
-						children: []Node{&GlamourNode{Text: "Some text"}},
-					},
-					&GridColumnNode{
-						children: []Node{
-							&GridNode{
-								children: []Node{
-									&GridColumnNode{
-										children: []Node{
-											&GlamourNode{Text: "Nested text"},
-										},
-									},
-									&GridColumnNode{
-										children: []Node{
-											&GlamourNode{Text: "Nested text 2"},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			want: node(
+				&GridNode{},
+				node(&GridColumnNode{}, &GlamourNode{Text: "Some text"}),
+				node(&GridColumnNode{}, node(
+					&GridNode{},
+					node(&GridColumnNode{}, &GlamourNode{Text: "Nested text"}),
+					node(&GridColumnNode{}, &GlamourNode{Text: "Nested text 2"}),
+				)),
+			),
 		},
 	}
 	for _, tt := range tests {
