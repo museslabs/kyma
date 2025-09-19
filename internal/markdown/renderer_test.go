@@ -37,7 +37,7 @@ _carduus_ in Carthage and Cordoba.
 --Samuel Taylor Coleridge, [The Rime of the Ancient Mariner][rime]
 
 [rime]: https://poetryfoundation.org/poems/43997/
-		`, false)
+		`, false, 0, 0)
 	if gotErr != nil {
 		t.Errorf("Render() failed: %v", gotErr)
 	}
@@ -60,7 +60,7 @@ func main() {
 }
 	`
 
-	got, gotErr := r.Render(fmt.Sprintf("# Slide\n```go{3,6}\n%s\n```", codeBlock), false)
+	got, gotErr := r.Render(fmt.Sprintf("# Slide\n```go{3,6}\n%s\n```", codeBlock), false, 0, 0)
 	if gotErr != nil {
 		t.Errorf("Render() failed: %v", gotErr)
 	}
@@ -84,7 +84,7 @@ func main() {
 
 	got, gotErr := r.Render(
 		fmt.Sprintf("# Slide\n```go{3,6} --numbered\n%s\n```\n", codeBlock),
-		false,
+		false, 0, 0,
 	)
 	if gotErr != nil {
 		t.Errorf("Render() failed: %v", gotErr)
@@ -111,8 +111,48 @@ func TestRenderer_RenderCodeBlockWithStartFromLine(t *testing.T) {
 
 	got, gotErr := r.Render(
 		fmt.Sprintf("# Slide\n```go{2-8} --numbered --start-at-line 10\n%s\n```\n", codeBlock),
-		false,
+		false, 0, 0,
 	)
+	if gotErr != nil {
+		t.Errorf("Render() failed: %v", gotErr)
+	}
+
+	golden.RequireEqual(t, got)
+}
+
+func TestRenderer_GridLayout(t *testing.T) {
+	r, err := NewRenderer("dark")
+	if err != nil {
+		t.Fatalf("could not construct receiver type: %v", err)
+	}
+
+	got, gotErr := r.Render(
+		`
+Heading
+=======
+
+[grid]
+[column]
+## Grid column 1 data
+[/column]
+
+[column]
+## Grid column 2
+
+> Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+[/column]
+
+[column]
+## Grid column 3
+
+- item 1
+- item 2
+- item 3
+[/column]
+[/grid]
+
+[Epilogue](https://kyma.ink)
+		`, false, 0, 0)
 	if gotErr != nil {
 		t.Errorf("Render() failed: %v", gotErr)
 	}
