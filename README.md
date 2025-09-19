@@ -294,6 +294,6 @@ All contributions are welcome! If you're planning a significant change or you're
 - ~~Add support for more style options like text color and background color~~ ✅ **Done!**
 - ~~Allow choosing from any glamour themes~~ ✅ **Done!**
 - ~~Support for custom JSON theme files~~ ✅ **Done!**
-- Create grid-based slide layouts with transitions for each pane
+- ~~Create grid-based slide layouts~~ ✅ **Done!**
 - Add more transition effects
 - ~~Support image rendering in terminals (e.g., via the Kitty protocol)~~ ✅ **Done!**
