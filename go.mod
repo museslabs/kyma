@@ -9,6 +9,7 @@ require (
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/ansi v0.8.0
+	github.com/charmbracelet/x/exp/golden v0.0.0-20250714123521-bc8a1995e079
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-yaml v1.17.1
@@ -21,7 +22,7 @@ require (
 
 require (
 	github.com/aymanbagabas/go-udiff v0.3.1 // indirect
-	github.com/charmbracelet/x/exp/golden v0.0.0-20250714123521-bc8a1995e079 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 )
 

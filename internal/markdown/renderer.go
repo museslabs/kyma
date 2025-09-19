@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/muesli/reflow/wrap"
 
 	"github.com/museslabs/kyma/internal/config"
 	"github.com/museslabs/kyma/internal/img"
@@ -38,6 +39,8 @@ func NewRenderer(theme string, options ...RendererOption) (*Renderer, error) {
 	p := NewMarkdownParser()
 	p.Register(Prioritized[Parser](NewImageParser(), 1))
 	p.Register(Prioritized[Parser](NewCodeBlockParser(), 1))
+	p.Register(Prioritized[Parser](NewGridParser(), 1))
+	p.Register(Prioritized[Parser](NewGridColumnParser(), 2))
 
 	r := &Renderer{
 		tr:     tr,
@@ -55,11 +58,11 @@ func NewRenderer(theme string, options ...RendererOption) (*Renderer, error) {
 	return r, nil
 }
 
-func (r *Renderer) Render(in string, animating bool) (string, error) {
-	return r.RenderBytes([]byte(in), animating)
+func (r *Renderer) Render(in string, animating bool, width, height int) (string, error) {
+	return r.RenderBytes([]byte(in), animating, width, height)
 }
 
-func (r *Renderer) RenderBytes(in []byte, animating bool) (string, error) {
+func (r *Renderer) RenderBytes(in []byte, animating bool, width, height int) (string, error) {
 	var b strings.Builder
 
 	// Clear kitty images
@@ -67,14 +70,14 @@ func (r *Renderer) RenderBytes(in []byte, animating bool) (string, error) {
 		b.WriteString("\x1b_Ga=d\x1b\\")
 	}
 
-	if err := r.renderNode(r.parser.Parse(in), animating, &b); err != nil {
+	if err := r.renderNode(r.parser.Parse(in), animating, width, height, &b); err != nil {
 		return "", err
 	}
 
 	return b.String(), nil
 }
 
-func (r *Renderer) renderNode(n Node, animating bool, b *strings.Builder) error {
+func (r *Renderer) renderNode(n Node, animating bool, width, height int, b *strings.Builder) error {
 	if n == nil {
 		return nil
 	}
@@ -113,9 +116,9 @@ func (r *Renderer) renderNode(n Node, animating bool, b *strings.Builder) error 
 
 		if !animating {
 			b.WriteString(ansi.SaveCursor)
-			b.WriteString(limg)
-			b.WriteString(ansi.RestoreCursor)
 			b.WriteString(himg)
+			b.WriteString(ansi.RestoreCursor)
+			b.WriteString(limg)
 		} else {
 			b.WriteString(limg)
 		}
@@ -144,12 +147,47 @@ func (r *Renderer) renderNode(n Node, animating bool, b *strings.Builder) error 
 
 		b.WriteString(codeStyle.Render(renderedContent))
 
+	case NodeKindGrid:
+		var (
+			gridBuilder strings.Builder
+			parts       []string
+		)
+
+		for _, c := range n.Children() {
+			if err := r.renderNode(c, animating, width, height, &gridBuilder); err != nil {
+				return err
+			}
+			parts = append(parts, gridBuilder.String())
+			gridBuilder.Reset()
+		}
+
+		b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, parts...))
+		return nil
+
+	case NodeKindGridColumn:
+		var columnBuilder strings.Builder
+
+		columnWidth := (width / len(n.Parent().Children())) - 1
+		for _, c := range n.Children() {
+			if err := r.renderNode(c, animating, width, height, &columnBuilder); err != nil {
+				return err
+			}
+
+			if c.Kind() == NodeKindImage {
+				b.WriteString(columnBuilder.String())
+			} else {
+				b.WriteString(wrap.String(columnBuilder.String(), columnWidth))
+			}
+			columnBuilder.Reset()
+		}
+		return nil
+
 	default:
 		return fmt.Errorf("invalid node kind: %d", n.Kind())
 	}
 
 	for _, c := range n.Children() {
-		if err := r.renderNode(c, animating, b); err != nil {
+		if err := r.renderNode(c, animating, width, height, b); err != nil {
 			return err
 		}
 	}

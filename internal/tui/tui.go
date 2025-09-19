@@ -346,6 +346,8 @@ func (m model) View() string {
 		lipgloss.Center,
 		m.slide.View(
 			(m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating()) || hasOverlay,
+			m.width,
+			m.height,
 		),
 	)
 
