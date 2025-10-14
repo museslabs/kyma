@@ -1,7 +1,9 @@
 package tui
 
 import (
+	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -159,9 +161,9 @@ func (m model) Init() tea.Cmd {
 
 	return tea.Batch(
 		tea.ClearScreen,
-		// tea.Tick(time.Second, func(time.Time) tea.Msg {
-		// 	return TimerTickMsg{}
-		// }),
+		tea.Tick(time.Second, func(time.Time) tea.Msg {
+			return TimerTickMsg{}
+		}),
 	)
 }
 
@@ -323,10 +325,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		slide, cmd := m.slide.Update()
 		m.slide = slide
 		return m, cmd
-		// case TimerTickMsg:
-		// 	var cmd tea.Cmd
-		// 	m.globalTimer, cmd = m.globalTimer.Update(msg)
-		// 	return m, cmd
+	case TimerTickMsg:
+		var cmd tea.Cmd
+		m.globalTimer, cmd = m.globalTimer.Update(msg)
+		m.slide.Timer, _ = m.slide.Timer.Update(msg)
+		return m, cmd
 	}
 
 	return m, nil
@@ -350,10 +353,12 @@ func (m model) View() string {
 	)
 
 	if m.command != nil && m.command.IsShowing() {
+		fmt.Print("\x1b_Ga=d\x1b\\")
 		return m.command.Show(slideView, m.width, m.height)
 	}
 
 	if m.goTo != nil && m.goTo.IsShowing() {
+		fmt.Print("\x1b_Ga=d\x1b\\")
 		return m.goTo.Show(slideView, m.width, m.height)
 	}
 
