@@ -56,12 +56,13 @@ func (s *Slide) Update() (*Slide, tea.Cmd) {
 	return s, tea.Batch(cmd)
 }
 
-func (s *Slide) View(animating bool) string {
+func (s *Slide) View(animating bool, width, height int) string {
 	var b strings.Builder
 
 	out, _ := s.renderer.Render(
 		s.Data,
 		(s.ActiveTransition != nil && s.ActiveTransition.Animating()) || animating,
+		width, height,
 	)
 
 	if s.ActiveTransition != nil && s.ActiveTransition.Animating() {
@@ -70,11 +71,17 @@ func (s *Slide) View(animating bool) string {
 			if s.Next == nil {
 				panic("backwards transition at the last slide")
 			} else {
-				b.WriteString(s.ActiveTransition.View(s.Next.View(true), s.Style.LipGlossStyle.Render(out)))
+				b.WriteString(s.ActiveTransition.View(
+					s.Next.View(true, width, height),
+					s.Style.LipGlossStyle.Render(out),
+				))
 			}
 		} else {
 			if s.Prev != nil {
-				b.WriteString(s.ActiveTransition.View(s.Prev.View(true), s.Style.LipGlossStyle.Render(out)))
+				b.WriteString(s.ActiveTransition.View(
+					s.Prev.View(true, width, height),
+					s.Style.LipGlossStyle.Render(out),
+				))
 			} else {
 				b.WriteString(s.Style.LipGlossStyle.Render(out))
 			}

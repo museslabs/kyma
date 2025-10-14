@@ -227,6 +227,49 @@ style:
 
 ----
 ---
+title: Grid layouts
+transition: swipeLeft
+image_backend: docs
+---
+
+# Grid Layout
+
+You can create grid layouts by using the `[grid]` and `[column]` tags with their
+respective closing tags that start with a backslash `/`
+
+[grid]
+[column]
+```go
+package main
+
+import "fmt"
+
+func main() {
+  fmt.Println("Hello World")
+}
+```
+[/column]
+[column]
+```c
+#include <stdio.h>
+
+int main(void) {
+  printf("Hello World\n");
+  return 0;
+}
+```
+[/column]
+[column]
+```rust
+fn main() {
+  println!("Hello World");
+}
+```
+[/column]
+[/grid]
+
+----
+---
 title: Achievements
 transition: swipeLeft
 image_backend: docs
