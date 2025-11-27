@@ -9,19 +9,19 @@ require (
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/ansi v0.8.0
+	github.com/charmbracelet/x/exp/golden v0.0.0-20250714123521-bc8a1995e079
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-yaml v1.17.1
 	github.com/mattn/go-runewidth v0.0.16
 	github.com/muesli/reflow v0.3.0
-	github.com/ploMP4/chafa-go v0.2.0
+	github.com/ploMP4/chafa-go v0.4.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 )
 
 require (
 	github.com/aymanbagabas/go-udiff v0.3.1 // indirect
-	github.com/charmbracelet/x/exp/golden v0.0.0-20250714123521-bc8a1995e079 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 )
 
