@@ -88,7 +88,18 @@ func (r *Renderer) renderNode(n Node, animating bool, width, height int, b *stri
 
 	case NodeKindGlamour:
 		n := n.(*GlamourNode)
-		out, err := r.tr.Render(n.Text)
+		tr := r.tr
+		if n.Parent() != nil && n.Parent().Kind() == NodeKindGridColumn && width > 0 {
+			var err error
+			tr, err = glamour.NewTermRenderer(
+				glamour.WithStylePath(r.options.theme),
+				glamour.WithWordWrap(width-2),
+			)
+			if err != nil {
+				return err
+			}
+		}
+		out, err := tr.Render(n.Text)
 		if err != nil {
 			return err
 		}
@@ -143,7 +154,11 @@ func (r *Renderer) renderNode(n Node, animating bool, width, height int, b *stri
 		}
 
 		// Apply consistent styling
-		codeStyle := lipgloss.NewStyle().Width(78)
+		codeWidth := 78
+		if n.Parent() != nil && n.Parent().Kind() == NodeKindGridColumn && width > 0 {
+			codeWidth = width
+		}
+		codeStyle := lipgloss.NewStyle().Width(codeWidth)
 
 		b.WriteString(codeStyle.Render(renderedContent))
 
@@ -169,7 +184,7 @@ func (r *Renderer) renderNode(n Node, animating bool, width, height int, b *stri
 
 		columnWidth := (width / len(n.Parent().Children())) - 1
 		for _, c := range n.Children() {
-			if err := r.renderNode(c, animating, width, height, &columnBuilder); err != nil {
+			if err := r.renderNode(c, animating, columnWidth, height, &columnBuilder); err != nil {
 				return err
 			}
 
