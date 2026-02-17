@@ -47,6 +47,12 @@ func Get(name string, fps int) Transition {
 		return newSwipeRight(fps)
 	case "flip":
 		return newFlipRight(fps)
+	case "collapse":
+		return newCollapse(fps)
+	case "expand":
+		return newExpand(fps)
+	case "fade":
+		return newFade(fps)
 	default:
 		return newNoTransition(fps)
 	}
