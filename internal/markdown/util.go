@@ -24,3 +24,11 @@ func (s PrioritizedSlice[T]) Sort() {
 func Prioritized[T any](v T, priority int) PrioritizedValue[T] {
 	return PrioritizedValue[T]{v, priority}
 }
+
+func node(parent Node, children ...Node) Node {
+	for _, c := range children {
+		c.SetParent(parent)
+		parent.AddChild(c)
+	}
+	return parent
+}

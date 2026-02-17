@@ -18,7 +18,7 @@ type Parser interface {
 	// Parse attempts to parse a [Node] from the reader. It should return nil if
 	// parsing fails, allowing [MarkdownParser.Parse] to try the next parser.
 	// Note: The trigger byte has already been consumed before calling Parse.
-	Parse(r *bytes.Reader) Node
+	Parse(r *bytes.Reader, m *MarkdownParser) Node
 }
 
 // MarkdownParser is an extensible parser that converts a markdown string into
@@ -45,20 +45,16 @@ func (p *MarkdownParser) Register(parser PrioritizedValue[Parser]) {
 	}
 }
 
-// Parse processes the input byte-by-byte and constructs a [Node] list,
-// starting from a root [Node]. For each byte, it checks for registered Parsers
+// Parse processes the input byte-by-byte and constructs a [Node] tree,
+// starting from a [MarkdownRootNode]. For each byte, it checks for registered Parsers
 // triggered by that byte and attempts to parse using them. If no parser succeeds,
 // the byte is added to a buffer. Buffered text is eventually wrapped in a
 // [GlamourNode], the default [Node] type.
 func (p MarkdownParser) Parse(in []byte) Node {
 	r := bytes.NewReader(in)
+	root := &MarkdownRootNode{}
 
-	var (
-		root  Node
-		curr  Node
-		chunk bytes.Buffer
-	)
-
+	var chunk bytes.Buffer
 	for {
 		b, err := r.ReadByte()
 		if err != nil {
@@ -68,55 +64,45 @@ func (p MarkdownParser) Parse(in []byte) Node {
 			slog.Error("failed advancing reader", slog.Any("error", err))
 		}
 
-		parsers, ok := p.registry[b]
-		if !ok {
+		n := p.parseNode(r, b)
+		if n == nil {
 			chunk.WriteByte(b)
 			continue
 		}
 
-		parsed := false
-		for _, parser := range parsers {
-			markedPos, _ := r.Seek(0, io.SeekCurrent)
-			n := parser.Value.Parse(r)
-			if n == nil {
-				_, _ = r.Seek(markedPos, io.SeekStart)
-				continue
-			}
-
-			if chunk.String() != "" {
-				if root == nil {
-					root = &GlamourNode{Text: chunk.String()}
-					curr = root
-				} else {
-					curr.SetNext(&GlamourNode{Text: chunk.String()})
-					curr = curr.Next()
-				}
-			}
-
+		if chunk.String() != "" {
+			child := &GlamourNode{Text: chunk.String()}
+			child.SetParent(root)
+			root.AddChild(child)
 			chunk.Reset()
-
-			if root == nil {
-				root = n
-				curr = root
-			} else {
-				curr.SetNext(n)
-				curr = curr.Next()
-			}
-
-			parsed = true
 		}
-		if !parsed {
-			chunk.WriteByte(b)
-		}
+		n.SetParent(root)
+		root.AddChild(n)
 	}
 
 	if chunk.String() != "" {
-		if root == nil {
-			root = &GlamourNode{Text: chunk.String()}
-		} else {
-			curr.SetNext(&GlamourNode{Text: chunk.String()})
-		}
+		child := &GlamourNode{Text: chunk.String()}
+		child.SetParent(root)
+		root.AddChild(child)
 	}
 
 	return root
+}
+
+func (p MarkdownParser) parseNode(r *bytes.Reader, b byte) Node {
+	parsers, ok := p.registry[b]
+	if !ok {
+		return nil
+	}
+
+	for _, parser := range parsers {
+		markedPos, _ := r.Seek(0, io.SeekCurrent)
+		n := parser.Value.Parse(r, &p)
+		if n != nil {
+			return n
+		}
+		_, _ = r.Seek(markedPos, io.SeekStart)
+	}
+
+	return nil
 }
