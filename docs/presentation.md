@@ -67,6 +67,9 @@ style:
 - `slideUp` - Slide slides up from bottom
 - `slideDown` - Slide slides down from top
 - `flip` - Flip transition effect
+- `collapse` - Collapse transition effect
+- `expand` - Expand transition effect
+- `fade` - Fade transition effect
 
 ----
 ---
