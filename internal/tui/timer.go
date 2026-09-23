@@ -33,7 +33,6 @@ func (t Timer) Start() Timer {
 	return t
 }
 
-
 func (t Timer) Reset() Timer {
 	t.startTime = time.Now()
 	t.duration = 0
