@@ -237,11 +237,11 @@ image_backend: docs
 
 # Grid Layout
 
-You can create grid layouts by using the `[grid]` and `[column]` tags with their
-respective closing tags that start with a backslash `/`
+Split a slide with `[row]` and `[col]`. A row lays its columns out side by
+side, and an unsized column takes an equal share of the width.
 
-[grid]
-[column]
+[row gap=2]
+[col]
 ```go
 package main
 
@@ -251,25 +251,155 @@ func main() {
   fmt.Println("Hello World")
 }
 ```
-[/column]
-[column]
-```c
-#include <stdio.h>
-
-int main(void) {
-  printf("Hello World\n");
-  return 0;
-}
-```
-[/column]
-[column]
+[/col]
+[col]
 ```rust
 fn main() {
   println!("Hello World");
 }
 ```
-[/column]
+[/col]
+[/row]
+
+A tag has to be the first thing on its line, so `[grid]` in the middle of a
+sentence stays ordinary text. Closing tags may end a line, which is why
+`[row]one line[/row]` works.
+
+----
+---
+title: Sizing columns
+transition: swipeLeft
+image_backend: docs
+---
+
+# Sizing
+
+`span` gives a column a share of the row, `width` gives it an exact number of
+cells or a percentage. A `span=2` column next to a `span=1` one is the classic
+two thirds / one third split.
+
+[row gap=2]
+[col span=2 border=rounded pad=1]
+`span=2` — twice the width of its neighbour.
+[/col]
+[col border=rounded pad=1]
+`span=1`
+[/col]
+[/row]
+
+[row gap=2]
+[col width=30% border=rounded pad=1]
+`width=30%`
+[/col]
+[col border=rounded pad=1]
+Whatever is left over.
+[/col]
+[/row]
+
+----
+---
+title: Rows and nesting
+transition: swipeLeft
+image_backend: docs
+---
+
+# Master Layouts
+
+Wrap rows in a `[grid]` to stack them, and nest a grid inside a column to split
+it again. That is all a tiling master layout is: one wide column beside a stack.
+
+[grid gap=1]
+[col span=2 border=rounded pad=1]
+## Master
+
+The wide column, `span=2`.
+[/col]
+[col]
+[row border=rounded pad="0 1"]stack one[/row]
+[row border=rounded pad="0 1"]stack two[/row]
+[/col]
 [/grid]
+
+Rows are as tall as their content until one asks for a share of the slide with
+`span` or an exact `height`.
+
+----
+---
+title: Layout attributes
+transition: swipeLeft
+image_backend: docs
+---
+
+# Attributes
+
+Every container takes the same set:
+
+[row gap=3]
+[col]
+- `span=N` — share of the axis
+- `width=N`, `width=N%` — an exact column width
+- `height=N`, `height=N%` — an exact row height
+- `gap=N` — cells between children
+[/col]
+[col]
+- `align` — `left`, `center`, `right`
+- `valign` — `top`, `middle`, `bottom`
+- `pad=N` or `pad="V H"`
+- `border=rounded`, `border_color="#ff0000"`
+[/col]
+[/row]
+
+Borders use the same names as a slide's own `style.border`.
+
+----
+---
+title: Reusable layouts
+transition: swipeLeft
+image_backend: docs
+---
+
+# Reusable Layouts
+
+Define a layout once and fill it per slide. In `kyma.yaml`:
+
+```yaml
+masters:
+  two-col: |
+    [row gap=2]
+    [col span=2]
+    [slot content]
+    [/col]
+    [col]
+    [slot side]
+    [/col]
+    [/row]
+```
+
+----
+---
+title: Filling a layout
+transition: swipeLeft
+image_backend: docs
+---
+
+# Filling a Layout
+
+A slide then only writes its content:
+
+```markdown
+---
+master: two-col
+---
+
+# Headline
+
+[slot side]
+- a note
+[/slot]
+```
+
+Anything outside a `[slot]` fills `content`. `master:` also takes a path to a
+markdown file, and `global.master` applies one to the whole deck.
 
 ----
 ---
