@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -55,11 +56,18 @@ func (s *Slide) Update() (*Slide, tea.Cmd) {
 func (s *Slide) View(animating bool, width, height int) string {
 	var b strings.Builder
 
-	out, _ := s.renderer.Render(
+	// Grids need the space inside the slide's border and padding, not the
+	// terminal's, or every column overflows by the width of the frame.
+	frame := s.Style.LipGlossStyle
+	out, err := s.renderer.Render(
 		s.Data,
 		(s.ActiveTransition != nil && s.ActiveTransition.Animating()) || animating,
-		width, height,
+		width-frame.GetHorizontalFrameSize(),
+		height-frame.GetVerticalFrameSize(),
 	)
+	if err != nil {
+		out = fmt.Sprintf("# Error rendering slide\n\n%s", err)
+	}
 
 	if s.ActiveTransition != nil && s.ActiveTransition.Animating() {
 		direction := s.ActiveTransition.Direction()

@@ -13,7 +13,9 @@ const (
 	NodeKindImage
 	NodeKindCodeBlock
 	NodeKindGrid
+	NodeKindGridRow
 	NodeKindGridColumn
+	NodeKindError
 )
 
 type Node interface {
@@ -156,31 +158,45 @@ func (n CodeBlockNode) String() string {
 	)
 }
 
+// GridNode stacks its rows vertically. After parsing its children are always
+// [GridRowNode]s: anything else written directly inside a [grid] is wrapped in
+// an implicit row, see [normalizeGrid].
 type GridNode struct {
 	BaseNode
 
-	ColumnCount int
+	Box
 }
 
 func (n GridNode) Kind() NodeKind {
 	return NodeKindGrid
 }
 
-func (n *GridNode) AddChild(node Node) {
-	if node.Kind() != NodeKindGridColumn {
-		return
-	}
-	n.children = append(n.children, node)
-}
-
 func (n GridNode) String() string {
-	return fmt.Sprintf(`Grid(ColumnCount: %d)`, n.ColumnCount)
+	return fmt.Sprintf("Grid(%s)", n.attrString())
 }
 
+// GridRowNode lays its columns out side by side. After parsing its children are
+// always [GridColumnNode]s, see [normalizeRow].
+type GridRowNode struct {
+	BaseNode
+
+	Box
+}
+
+func (n GridRowNode) Kind() NodeKind {
+	return NodeKindGridRow
+}
+
+func (n GridRowNode) String() string {
+	return fmt.Sprintf("GridRow(%s)", n.attrString())
+}
+
+// GridColumnNode holds slide content, and may nest another [GridNode] to split
+// its space further.
 type GridColumnNode struct {
 	BaseNode
 
-	Span int
+	Box
 }
 
 func (n GridColumnNode) Kind() NodeKind {
@@ -188,5 +204,21 @@ func (n GridColumnNode) Kind() NodeKind {
 }
 
 func (n GridColumnNode) String() string {
-	return fmt.Sprintf(`GridColumn(Span: %d)`, n.Span)
+	return fmt.Sprintf("GridColumn(%s)", n.attrString())
+}
+
+// ErrorNode reports a malformed layout back to the author instead of silently
+// dropping their content.
+type ErrorNode struct {
+	BaseNode
+
+	Message string
+}
+
+func (n ErrorNode) Kind() NodeKind {
+	return NodeKindError
+}
+
+func (n ErrorNode) String() string {
+	return fmt.Sprintf(`Error(Message: "%s")`, n.Message)
 }

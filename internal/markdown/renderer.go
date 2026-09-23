@@ -11,16 +11,20 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/muesli/reflow/wrap"
 
 	"github.com/museslabs/kyma/internal/config"
 	"github.com/museslabs/kyma/internal/img"
 )
 
+// glamourMargin is the horizontal margin glamour reserves around a document,
+// on top of the word wrap width it is configured with.
+const glamourMargin = 2
+
 type RendererOption func(*Renderer) error
 
 type Renderer struct {
 	tr      *glamour.TermRenderer
+	wrapped map[int]*glamour.TermRenderer
 	parser  *MarkdownParser
 	options rendererOptions
 }
@@ -40,11 +44,13 @@ func NewRenderer(theme string, options ...RendererOption) (*Renderer, error) {
 	p.Register(Prioritized[Parser](NewImageParser(), 1))
 	p.Register(Prioritized[Parser](NewCodeBlockParser(), 1))
 	p.Register(Prioritized[Parser](NewGridParser(), 1))
-	p.Register(Prioritized[Parser](NewGridColumnParser(), 2))
+	p.Register(Prioritized[Parser](NewGridRowParser(), 2))
+	p.Register(Prioritized[Parser](NewGridColumnParser(), 3))
 
 	r := &Renderer{
-		tr:     tr,
-		parser: p,
+		tr:      tr,
+		wrapped: map[int]*glamour.TermRenderer{},
+		parser:  p,
 		options: rendererOptions{
 			imgBackend: img.Get("chafa"),
 			theme:      theme,
@@ -56,6 +62,31 @@ func NewRenderer(theme string, options ...RendererOption) (*Renderer, error) {
 		}
 	}
 	return r, nil
+}
+
+// termRenderer returns a glamour renderer whose output is exactly width cells
+// wide. Glamour lays its document out inside a two cell margin that it adds on
+// top of the wrap width, so the wrap has to be asked for two cells short.
+// Renderers are cached because a slide is re-rendered on every animation frame.
+func (r *Renderer) termRenderer(width int) (*glamour.TermRenderer, error) {
+	if width <= glamourMargin {
+		return r.tr, nil
+	}
+
+	if tr, ok := r.wrapped[width]; ok {
+		return tr, nil
+	}
+
+	tr, err := glamour.NewTermRenderer(
+		glamour.WithStylePath(r.options.theme),
+		glamour.WithWordWrap(width-glamourMargin),
+	)
+	if err != nil {
+		return nil, err
+	}
+	r.wrapped[width] = tr
+
+	return tr, nil
 }
 
 func (r *Renderer) Render(in string, animating bool, width, height int) (string, error) {
@@ -88,27 +119,37 @@ func (r *Renderer) renderNode(n Node, animating bool, width, height int, b *stri
 
 	case NodeKindGlamour:
 		n := n.(*GlamourNode)
-		tr := r.tr
-		if n.Parent() != nil && n.Parent().Kind() == NodeKindGridColumn && width > 0 {
-			var err error
-			tr, err = glamour.NewTermRenderer(
-				glamour.WithStylePath(r.options.theme),
-				glamour.WithWordWrap(width-2),
-			)
-			if err != nil {
-				return err
-			}
+
+		tr, err := r.termRenderer(width)
+		if err != nil {
+			return err
 		}
+
 		out, err := tr.Render(n.Text)
 		if err != nil {
 			return err
 		}
 		b.WriteString(out)
 
+	case NodeKindError:
+		n := n.(*ErrorNode)
+		fmt.Fprintf(b, "%s\n", lipgloss.NewStyle().
+			Foreground(lipgloss.Color("9")).
+			Render("⚠ "+n.Message))
+
 	case NodeKindImage:
 		n := n.(*ImageNode)
 
-		limg, err := r.options.imgBackend.Render(n.Path, n.Width, n.Height, true)
+		// Keep an image from spilling out of the column it was placed in.
+		imgWidth, imgHeight := n.Width, n.Height
+		if width > 0 && imgWidth > width {
+			if imgWidth > 0 {
+				imgHeight = imgHeight * width / imgWidth
+			}
+			imgWidth = width
+		}
+
+		limg, err := r.options.imgBackend.Render(n.Path, imgWidth, imgHeight, true)
 		if err != nil {
 			fmt.Fprintf(b, "[Error rendering image: %s]", n.Label)
 			break
@@ -119,7 +160,7 @@ func (r *Renderer) renderNode(n Node, animating bool, width, height int, b *stri
 			break
 		}
 
-		himg, err := r.options.imgBackend.Render(n.Path, n.Width, n.Height, false)
+		himg, err := r.options.imgBackend.Render(n.Path, imgWidth, imgHeight, false)
 		if err != nil {
 			fmt.Fprintf(b, "[Error rendering image: %s]", n.Label)
 			break
@@ -153,48 +194,23 @@ func (r *Renderer) renderNode(n Node, animating bool, width, height int, b *stri
 			renderedContent = r.renderPlainCode(lines, n)
 		}
 
-		// Apply consistent styling
 		codeWidth := 78
-		if n.Parent() != nil && n.Parent().Kind() == NodeKindGridColumn && width > 0 {
+		if width > 0 {
 			codeWidth = width
 		}
-		codeStyle := lipgloss.NewStyle().Width(codeWidth)
+		b.WriteString(lipgloss.NewStyle().Width(codeWidth).Render(renderedContent))
+		b.WriteString("\n")
 
-		b.WriteString(codeStyle.Render(renderedContent))
-
-	case NodeKindGrid:
-		var (
-			gridBuilder strings.Builder
-			parts       []string
-		)
-
-		for _, c := range n.Children() {
-			if err := r.renderNode(c, animating, width, height, &gridBuilder); err != nil {
-				return err
-			}
-			parts = append(parts, gridBuilder.String())
-			gridBuilder.Reset()
+	case NodeKindGrid, NodeKindGridRow, NodeKindGridColumn:
+		out, err := r.renderNodeBlock(n, animating, sizing{
+			Width:  gridWidth(width),
+			Budget: remainingHeight(height, b),
+		})
+		if err != nil {
+			return err
 		}
-
-		b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, parts...))
-		return nil
-
-	case NodeKindGridColumn:
-		var columnBuilder strings.Builder
-
-		columnWidth := (width / len(n.Parent().Children())) - 1
-		for _, c := range n.Children() {
-			if err := r.renderNode(c, animating, columnWidth, height, &columnBuilder); err != nil {
-				return err
-			}
-
-			if c.Kind() == NodeKindImage {
-				b.WriteString(columnBuilder.String())
-			} else {
-				b.WriteString(wrap.String(columnBuilder.String(), columnWidth))
-			}
-			columnBuilder.Reset()
-		}
+		b.WriteString(out)
+		b.WriteString("\n")
 		return nil
 
 	default:
