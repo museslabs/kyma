@@ -39,8 +39,13 @@ func NewSlide(data string, props config.Properties) (*Slide, error) {
 
 	}
 
+	template, err := config.MasterLayout(props.Master)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Slide{
-		Data:       data,
+		Data:       markdown.ApplyLayout(template, data),
 		Properties: props,
 		renderer:   r,
 	}, nil
