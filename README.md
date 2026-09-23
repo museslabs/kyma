@@ -43,6 +43,11 @@ A terminal-based presentation tool that creates beautiful presentations from mar
 - **Customizable styling**: Configure borders, colors, and layouts via YAML front matter
 - **Theme support**: Choose from built-in Glamour themes or load custom JSON theme files
 - **Flexible layouts**: Center, align, and position content with various layout options
+- **Grid layouts**: Split a slide into rows and columns with `[grid]`, `[row]` and `[col]`
+  - Proportional `span`, exact `width`/`height`, or percentages
+  - Per-container `align`, `valign`, `gap`, `pad` and `border`
+  - Nest grids to build tiling master/stack layouts
+- **Master layouts**: Define a reusable layout once under `masters:` and fill its `[slot]`s from each slide
 - **Simple navigation**: Intuitive keyboard controls for presentation flow (vim style btw)
   - Command palette with slide search and filtering
   - Direct slide jumping by number
@@ -179,6 +184,121 @@ style:
 
 Layout can also be specified as a combination: `layout: center,right`
 
+### Grid Layouts
+
+Split a slide into columns with `[row]` and `[col]`:
+
+```markdown
+[row]
+[col]
+## Left
+[/col]
+[col]
+## Right
+[/col]
+[/row]
+```
+
+Wrap rows in a `[grid]` to stack them vertically. Columns written straight
+inside a `[grid]` share one implicit row, and content written straight inside a
+`[row]` gets an implicit column, so `[row]one line[/row]` is a complete row.
+
+An opening tag has to be the first thing on its line, which is what keeps
+`[grid]` in the middle of a sentence from being treated as markup. Closing tags
+may end a line. Tags inside a fenced code block are never interpreted.
+
+#### Sizing
+
+| Attribute | Applies to | Meaning |
+| --- | --- | --- |
+| `span=N` | `col`, `row` | Share of the axis. A `span=2` column is twice as wide as a `span=1` sibling. |
+| `width=N`, `width=N%` | `col` | An exact width in cells, or a percentage of the row. |
+| `height=N`, `height=N%` | `row`, `grid` | An exact height in lines, or a percentage of the slide. |
+
+Columns split their row evenly by default. Rows are as tall as their content
+until one asks for a share of the slide with `span` or an exact `height`.
+
+#### Presentation
+
+| Attribute | Meaning |
+| --- | --- |
+| `align` | `left`, `center` or `right` |
+| `valign` | `top`, `middle` or `bottom` |
+| `gap=N` | Cells left between children. A grid's gap carries over to its rows. |
+| `pad=N`, `pad="V H"` | Padding inside the container, CSS-style. |
+| `border` | Any border name a slide's `style.border` accepts, or `none`. |
+| `border_color` | Border colour, e.g. `"#9999CC"`. |
+
+#### Master/stack layouts
+
+Nesting a grid inside a column gives you the tiling layout window managers use:
+one wide column beside a stack.
+
+```markdown
+[grid gap=1]
+[col span=2]
+## Master
+[/col]
+[col]
+[row]stack one[/row]
+[row]stack two[/row]
+[/col]
+[/grid]
+```
+
+### Master Layouts
+
+Rather than repeating the same grid on every slide, define it once under
+`masters:` in your config file and leave holes for the content:
+
+```yaml
+masters:
+  two-col: |
+    [row gap=2]
+    [col span=2]
+    [slot content]
+    [/col]
+    [col]
+    [slot side]
+    [/col]
+    [/row]
+```
+
+A slide then picks the layout and fills it:
+
+```markdown
+---
+master: two-col
+---
+
+# Headline
+
+The body of the slide.
+
+[slot side]
+- a note
+- another
+[/slot]
+```
+
+Anything written outside a `[slot]` fills the `content` slot, so a slide that
+only needs the main hole can be plain markdown. A `[slot]` the slide leaves
+unfilled keeps whatever default content the layout wrote inside it.
+
+`master:` also accepts a path to a markdown file, which is handy for keeping
+layouts next to the presentation:
+
+```markdown
+---
+master: ./layouts/two-col.md
+---
+```
+
+Set `global.master` (or a preset's `master`) to apply one to a whole deck.
+
+> The key is `master:`, not `layout:`. `layout:` already means content
+> alignment within the slide.
+
 ### Timer Display
 
 The timer display shows two timing metrics:
@@ -226,6 +346,17 @@ presets:
     style:
       border: rounded
       theme: dracula
+
+masters:
+  two-col: |
+    [row gap=2]
+    [col]
+    [slot content]
+    [/col]
+    [col]
+    [slot side]
+    [/col]
+    [/row]
 ```
 
 You can use presets in your slides by specifying the preset name:
@@ -301,4 +432,5 @@ All contributions are welcome! If you're planning a significant change or you're
 - ~~Support for custom JSON theme files~~ ✅ **Done!**
 - ~~Add more transition effects~~ ✅ **Done!**
 - ~~Create grid-based slide layouts~~ ✅ **Done!**
+- ~~Reusable master layouts with content slots~~ ✅ **Done!**
 - ~~Support image rendering in terminals (e.g., via the Kitty protocol)~~ ✅ **Done!**
