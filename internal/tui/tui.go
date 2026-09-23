@@ -41,16 +41,16 @@ var keys = keyMap{
 		key.WithHelp("q, esc, ctrl+c", "quit"),
 	),
 	Next: key.NewBinding(
-		key.WithKeys("right", "l", " "),
-		key.WithHelp(">, l, <SPC>", "next"),
+		key.WithKeys("right", "l", " ", "pgdown"),
+		key.WithHelp(">, l, <SPC>, <PgDn>", "next"),
 	),
 	Prev: key.NewBinding(
-		key.WithKeys("left", "h"),
-		key.WithHelp("<, h", "previous"),
+		key.WithKeys("left", "h", "pgup"),
+		key.WithHelp("<, h, <PgUp>", "previous"),
 	),
 	Top: key.NewBinding(
-		key.WithKeys("home", "shift+up", "0"),
-		key.WithHelp("home, shift+up, 0", "top"),
+		key.WithKeys("home", "shift+up", "0", "f5"),
+		key.WithHelp("home, shift+up, 0, f5", "top"),
 	),
 	Bottom: key.NewBinding(
 		key.WithKeys("end", "shift+down", "$"),

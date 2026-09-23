@@ -94,15 +94,17 @@ kyma version
 
 ### Navigation
 
-- **Next slide**: `→`, `l`, or `Space`
-- **Previous slide**: `←` or `h`
-- **First slide**: `Home`, `Shift+↑`, or `0`
+- **Next slide**: `→`, `l`, `Space`, or `Page Down`
+- **Previous slide**: `←`, `h`, or `Page Up`
+- **First slide**: `Home`, `Shift+↑`, `0`, or `F5`
 - **Last slide**: `End`, `Shift+↓`, or `$`
 - **Command palette**: `/` or `p` - Opens a searchable list of all slides for quick navigation
 - **Go to slide**: `g` or `:` - Jump directly to a specific slide number
 - **Jump slides**: `1-9` + `h`/`←` or `l`/`→` - Jump multiple slides backward/forward (e.g., `5h` jumps 5 slides back)
 - **Toggle timer**: `t` - Shows/hides the timer display with total and per-slide timing
 - **Quit**: `q`, `Esc`, or `Ctrl+C`
+
+Presentation remotes (clickers) work out of the box: their next/previous buttons send `Page Down`/`Page Up`, the start button sends `F5` (jumps to the first slide), and the end button sends `Esc` (quits).
 
 ## Configuration
 
