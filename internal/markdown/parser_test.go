@@ -61,11 +61,14 @@ func TestMarkdownParser_Parse(t *testing.T) {
 				&GlamourNode{Text: "# This is a string\n"},
 				node(
 					&GridNode{},
-					node(&GridColumnNode{}, &GlamourNode{Text: "# Some other text"}),
-					node(&GridColumnNode{}, &ImageNode{Label: "image", Path: "./image.png"}),
-					node(&GridColumnNode{}, &GlamourNode{Text: "# Some other column stuff"}),
+					node(
+						&GridRowNode{},
+						node(&GridColumnNode{}, &GlamourNode{Text: "# Some other text"}),
+						node(&GridColumnNode{}, &ImageNode{Label: "image", Path: "./image.png"}),
+						node(&GridColumnNode{}, &GlamourNode{Text: "# Some other column stuff"}),
+					),
 				),
-				&GlamourNode{Text: "> And another string"},
+				&GlamourNode{Text: "\n> And another string"},
 			),
 		},
 	}
@@ -75,7 +78,8 @@ func TestMarkdownParser_Parse(t *testing.T) {
 			p.Register(Prioritized[Parser](NewImageParser(), 1))
 			p.Register(Prioritized[Parser](NewCodeBlockParser(), 1))
 			p.Register(Prioritized[Parser](NewGridParser(), 1))
-			p.Register(Prioritized[Parser](NewGridColumnParser(), 2))
+			p.Register(Prioritized[Parser](NewGridRowParser(), 2))
+			p.Register(Prioritized[Parser](NewGridColumnParser(), 3))
 
 			got := p.Parse(tt.in)
 			if Dump(got) != Dump(tt.want) {

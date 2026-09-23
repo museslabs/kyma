@@ -32,29 +32,35 @@ func TestDump(t *testing.T) {
 				&MarkdownRootNode{},
 				&GlamourNode{Text: "test"},
 				node(
-					&GridNode{ColumnCount: 3},
+					&GridNode{Box: Box{Gap: 1}},
 					node(
-						&GridColumnNode{Span: 1},
-						&GlamourNode{Text: "Col1"},
-						&GlamourNode{Text: "Col1a"},
-					),
-					node(
-						&GridColumnNode{Span: 2},
-						&GlamourNode{Text: "Col2"},
-						&GlamourNode{Text: "Col2a"},
+						&GridRowNode{},
+						node(
+							&GridColumnNode{},
+							&GlamourNode{Text: "Col1"},
+							&GlamourNode{Text: "Col1a"},
+						),
+						node(
+							&GridColumnNode{
+								Box: Box{Size: Size{Kind: SizeFraction, Value: 2}},
+							},
+							&GlamourNode{Text: "Col2"},
+							&GlamourNode{Text: "Col2a"},
+						),
 					),
 				),
 				&GlamourNode{Text: "test2"},
 			),
 			want: `MarkdownRoot()
 |-Glamour(Text: "test")
-|-Grid(ColumnCount: 3)
-| |-GridColumn(Span: 1)
-| | |-Glamour(Text: "Col1")
-| | └-Glamour(Text: "Col1a")
-| └-GridColumn(Span: 2)
-|   |-Glamour(Text: "Col2")
-|   └-Glamour(Text: "Col2a")
+|-Grid(gap: 1)
+| └-GridRow()
+|   |-GridColumn()
+|   | |-Glamour(Text: "Col1")
+|   | └-Glamour(Text: "Col1a")
+|   └-GridColumn(size: 2fr)
+|     |-Glamour(Text: "Col2")
+|     └-Glamour(Text: "Col2a")
 └-Glamour(Text: "test2")`,
 		},
 	}

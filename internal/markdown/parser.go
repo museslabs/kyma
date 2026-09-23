@@ -66,6 +66,10 @@ func (p MarkdownParser) Parse(in []byte) Node {
 
 		n := p.parseNode(r, b)
 		if n == nil {
+			if fence, ok := fencedBlock(r, b); ok {
+				chunk.WriteString(fence)
+				continue
+			}
 			chunk.WriteByte(b)
 			continue
 		}
