@@ -23,7 +23,10 @@ const (
 )
 
 type Properties struct {
-	Title        string                 `yaml:"title"`
+	Title string `yaml:"title"`
+	// Master is the master layout this slide fills, by name or by path. Style
+	// carries the separate `layout` key, which aligns content within the slide.
+	Master       string                 `yaml:"master"`
 	Style        StyleConfig            `yaml:"style"`
 	Transition   transitions.Transition `yaml:"transition"`
 	Notes        string                 `yaml:"notes"`
@@ -82,7 +85,7 @@ func (s *StyleConfig) DecodeMap(input map[string]any) error {
 		s.Layout = &layout
 	}
 
-	if border, ok := getBorder(aux.Border); ok {
+	if border, ok := GetBorder(aux.Border); ok {
 		s.Border = &border
 	}
 
@@ -114,7 +117,7 @@ func (s *StyleConfig) UnmarshalYAML(bytes []byte) error {
 		s.Layout = &layout
 	}
 
-	if border, ok := getBorder(aux.Border); ok {
+	if border, ok := GetBorder(aux.Border); ok {
 		s.Border = &border
 	}
 
@@ -166,7 +169,10 @@ func (s StyleConfig) Apply(width, height int) SlideStyle {
 	}
 }
 
-func getBorder(border string) (lipgloss.Border, bool) {
+// GetBorder resolves a border style name from the slide style vocabulary. It is
+// shared with grid containers so [col border=rounded] names the same borders a
+// slide does.
+func GetBorder(border string) (lipgloss.Border, bool) {
 	switch border {
 	case "rounded":
 		return lipgloss.RoundedBorder(), true
@@ -256,6 +262,7 @@ func getLayoutPosition(p string) (lipgloss.Position, error) {
 func (p *Properties) UnmarshalYAML(bytes []byte) error {
 	aux := struct {
 		Title        string      `yaml:"title"`
+		Master       string      `yaml:"master"`
 		Style        StyleConfig `yaml:"style"`
 		Transition   string      `yaml:"transition"`
 		Preset       string      `yaml:"preset"`
@@ -271,6 +278,7 @@ func (p *Properties) UnmarshalYAML(bytes []byte) error {
 	}
 
 	p.Title = aux.Title
+	p.Master = aux.Master
 	p.Notes = aux.Notes
 	p.ImageBackend = aux.ImageBackend
 
@@ -282,6 +290,9 @@ func (p *Properties) UnmarshalYAML(bytes []byte) error {
 		preset.Style.Merge(aux.Style)
 		p.Style = preset.Style
 		p.Transition = preset.Transition
+		if p.Master == "" {
+			p.Master = preset.Master
+		}
 	} else {
 		style := GlobalConfig.Global.Style
 		style.Merge(aux.Style)
@@ -291,6 +302,9 @@ func (p *Properties) UnmarshalYAML(bytes []byte) error {
 
 	if p.Transition == nil {
 		p.Transition = GlobalConfig.Global.Transition
+	}
+	if p.Master == "" {
+		p.Master = GlobalConfig.Global.Master
 	}
 	if p.ImageBackend == "" {
 		p.ImageBackend = "chafa"
@@ -304,6 +318,7 @@ func NewProperties(properties string) (Properties, error) {
 		return Properties{
 			Style:      GlobalConfig.Global.Style,
 			Transition: GlobalConfig.Global.Transition,
+			Master:     GlobalConfig.Global.Master,
 		}, nil
 	}
 

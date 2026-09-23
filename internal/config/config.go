@@ -22,11 +22,15 @@ var GlobalConfig config
 type config struct {
 	Global  presetConfig            `mapstructure:"global"`
 	Presets map[string]presetConfig `mapstructure:"presets"`
+	// Masters are reusable master layouts, keyed by the name a slide refers to
+	// them by. Each one is markdown holding a grid with [slot] placeholders.
+	Masters map[string]string `mapstructure:"masters"`
 }
 
 type presetConfig struct {
 	Style      StyleConfig            `mapstructure:"style"`
 	Transition transitions.Transition `mapstructure:"transition"`
+	Master     string                 `mapstructure:"master"`
 }
 
 func styleConfigDecodeHook() mapstructure.DecodeHookFunc {
@@ -139,6 +143,29 @@ presets:
     transition: swipeLeft
   animated:
     transition: slideUp
+
+# Reusable master layouts. A slide picks one with ` + "`master: two-col`" + ` in its
+# front matter and fills the holes with [slot] blocks; anything it writes
+# outside a slot goes into "content".
+masters:
+  two-col: |
+    [row gap=2]
+    [col]
+    [slot content]
+    [/col]
+    [col]
+    [slot side]
+    [/col]
+    [/row]
+  master-stack: |
+    [grid gap=1]
+    [col span=2]
+    [slot content]
+    [/col]
+    [col]
+    [slot side]
+    [/col]
+    [/grid]
 `
 
 	if err := os.WriteFile(configFile, []byte(defaultConfig), 0644); err != nil {
