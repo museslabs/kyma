@@ -39,6 +39,8 @@ A terminal-based presentation tool that creates beautiful presentations from mar
   - Flip effects
   - Collapse and expand
   - Fade in/out
+  - Morph: what two slides share glides into place and boxes move, resize and
+    change color, like Keynote's Magic Move
 - **Hot reload**: Live reloading of presentation files during editing by default
 - **Customizable styling**: Configure borders, colors, and layouts via YAML front matter
 - **Theme support**: Choose from built-in Glamour themes or load custom JSON theme files
@@ -171,6 +173,12 @@ This slide uses a custom JSON theme file
 - `collapse` - Collapse transition effect
 - `expand` - Expand transition effect
 - `fade` - Fade transition effect
+- `morph` - Whatever the two slides have in common glides to where the next
+  slide has it, while the rest fades out and in. Boxes move, resize and change
+  color as a whole, and text that only changed color blends into its new one.
+  Use it between slides that build on each other: a list that grows, a heading
+  that moves to the top, code that changes line by line, or a layout of boxes
+  that rearranges
 
 ### Style Configuration
 

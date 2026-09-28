@@ -70,6 +70,124 @@ style:
 - `collapse` - Collapse transition effect
 - `expand` - Expand transition effect
 - `fade` - Fade transition effect
+- `morph` - What two slides share glides into place, the rest fades
+
+----
+---
+title: Morph
+transition: morph
+style:
+  border: hidden
+  theme: dracula
+---
+
+# Morph
+
+`morph` carries whatever two slides have in common over to where the next
+slide has it, and fades the rest. It shines between slides that build on
+each other, like a list that grows or code that changes.
+
+```go
+func main() {
+    fmt.Println("hello")
+}
+```
+
+----
+---
+title: Morph, continued
+transition: morph
+style:
+  border: hidden
+  theme: dracula
+---
+
+# Morph
+
+`morph` carries whatever two slides have in common over to where the next
+slide has it, and fades the rest. It shines between slides that build on
+each other, like a list that grows or code that changes.
+
+```go
+func main() {
+    name := "kyma"
+    fmt.Println("hello", name)
+}
+```
+
+----
+---
+title: Morphing boxes
+transition: morph
+style:
+  border: hidden
+  theme: dracula
+---
+
+# Boxes
+
+Boxes morph whole: they move, resize and change color, and take what is in
+them along.
+
+[row gap=2]
+[col border=rounded border_color="#ff79c6" pad="1 2" align=center]
+**Plan**
+[/col]
+[col border=rounded border_color="#8be9fd" pad="1 2" align=center]
+**Build**
+[/col]
+[col border=rounded border_color="#50fa7b" pad="1 2" align=center]
+**Ship**
+[/col]
+[/row]
+
+----
+---
+title: Morphing boxes, rearranged
+transition: morph
+style:
+  border: hidden
+  theme: dracula
+---
+
+# Boxes
+
+Boxes morph whole: they move, resize and change color, and take what is in
+them along.
+
+[grid gap=1]
+[col span=2 border=rounded border_color="#8be9fd" pad="1 2" align=center]
+**Build**
+[/col]
+[col]
+[row border=rounded border_color="#ff79c6" pad="0 2" align=center]**Plan**[/row]
+[row border=rounded border_color="#50fa7b" pad="0 2" align=center]**Ship**[/row]
+[/col]
+[/grid]
+
+----
+---
+title: Morphing boxes, recolored
+transition: morph
+style:
+  border: hidden
+  theme: dracula
+---
+
+# Boxes
+
+Boxes morph whole: they move, resize and change color, and take what is in
+them along.
+
+[grid gap=1]
+[col span=2 border=rounded border_color="#ffb86c" pad="1 2" align=center]
+**Build**
+[/col]
+[col]
+[row border=rounded border_color="#bd93f9" pad="0 2" align=center]**Plan**[/row]
+[row border=rounded border_color="#f1fa8c" pad="0 2" align=center]**Ship**[/row]
+[/col]
+[/grid]
 
 ----
 ---
