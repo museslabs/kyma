@@ -22,9 +22,12 @@ const Fps = 60
 // bubbletea allows. Transitions that run on the clock animate at this rate.
 const RefreshRate = 120
 
+// Animate asks for the next frame. Frames land on the ticks of the clock
+// rather than an interval after the last one finished, so they come evenly
+// spaced and in step with the screen being redrawn at the same rate.
 func Animate(fps time.Duration) tea.Cmd {
 	fmt.Print("\x1b_Ga=d\x1b\\")
-	return tea.Tick(time.Second/fps, func(t time.Time) tea.Msg {
+	return tea.Every(time.Second/fps, func(t time.Time) tea.Msg {
 		return FrameMsg(t)
 	})
 }
