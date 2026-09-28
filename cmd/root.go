@@ -99,7 +99,13 @@ var rootCmd = &cobra.Command{
 		}
 
 		queryTerminalColors()
-		p := tea.NewProgram(tui.New(root, filename), tea.WithAltScreen(), tea.WithMouseAllMotion())
+		p := tea.NewProgram(
+			tui.New(root, filename),
+			tea.WithAltScreen(),
+			tea.WithMouseAllMotion(),
+			tea.WithOutput(newSyncedOutput(os.Stdout)),
+			tea.WithFPS(transitions.RefreshRate),
+		)
 
 		if !static {
 			slog.Info("Starting file watcher for live reload")
