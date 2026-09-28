@@ -46,6 +46,70 @@ func TestSlide_ViewFitsTheFrame(t *testing.T) {
 	}
 }
 
+// A slide keeps what it draws for animations between frames, but has to draw
+// itself again when the terminal changes size under it.
+func TestSlide_AnimatedViewFollowsTheSize(t *testing.T) {
+	slide, err := NewSlide("# Title\n\nsome text", config.Properties{})
+	if err != nil {
+		t.Fatalf("NewSlide() failed: %v", err)
+	}
+
+	for _, size := range [][2]int{{80, 24}, {80, 24}, {100, 30}, {80, 24}} {
+		width, height := size[0], size[1]
+		slide.Style = config.StyleConfig{}.Apply(width, height)
+
+		lines := strings.Split(slide.View(true, width, height), "\n")
+		if len(lines) != height || ansi.StringWidth(lines[0]) != width {
+			t.Errorf("at %dx%d the slide is %dx%d",
+				width, height, ansi.StringWidth(lines[0]), len(lines))
+		}
+	}
+}
+
+// Slides are rendered ahead of time in the background while the presentation
+// keeps showing them, and have to come out the same either way.
+func TestSlide_PrerenderAlongsideView(t *testing.T) {
+	const width, height = 80, 24
+
+	var slides []*Slide
+	for _, body := range []string{"# One\n\nfirst", "# Two\n\n- a\n- b", "# Three\n\n```go\nx := 1\n```"} {
+		slide, err := NewSlide(body, config.Properties{})
+		if err != nil {
+			t.Fatalf("NewSlide() failed: %v", err)
+		}
+		slide.Style = config.StyleConfig{}.Apply(width, height)
+		slides = append(slides, slide)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for _, s := range slides {
+			s.Prerender(width, height)
+		}
+	}()
+	for range 20 {
+		for _, s := range slides {
+			s.View(true, width, height)
+			s.View(false, width, height)
+		}
+	}
+	<-done
+
+	for i, s := range slides {
+		fresh, err := NewSlide(s.Data, config.Properties{})
+		if err != nil {
+			t.Fatalf("NewSlide() failed: %v", err)
+		}
+		fresh.Style = s.Style
+		for _, animating := range []bool{true, false} {
+			if got, want := s.View(animating, width, height), fresh.View(animating, width, height); got != want {
+				t.Errorf("slide %d, animating %v: the prerendered view differs from a fresh one", i, animating)
+			}
+		}
+	}
+}
+
 // TestSlide_MasterLayout runs a slide through the templating layer the way the
 // presentation loader does.
 func TestSlide_MasterLayout(t *testing.T) {

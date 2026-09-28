@@ -126,6 +126,15 @@ type model struct {
 	timerDisplay     TimerDisplay
 	syncServer       *SyncServer
 	presentationFile string
+
+	// prerendered is where slides were last rendered ahead of time for.
+	prerendered prerendered
+}
+
+// prerendered is a slide and the size its neighbours were rendered at.
+type prerendered struct {
+	slide         *Slide
+	width, height int
 }
 
 func New(rootSlide *Slide, presentationFile string) model {
@@ -169,6 +178,42 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	updated, cmd := m.update(msg)
+	next := updated.(model)
+	if prerender := next.prerender(); prerender != nil {
+		return next, tea.Batch(cmd, prerender)
+	}
+	return next, cmd
+}
+
+// prerender renders the slides a transition from the current one would need,
+// in the background, once the presentation comes to rest on a slide: the next
+// slide first, then this one and the previous one. Moving on then starts and
+// lands without waiting for their markdown and images to render.
+func (m *model) prerender() tea.Cmd {
+	if m.slide == nil || m.width == 0 || m.height == 0 ||
+		m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating() {
+		return nil
+	}
+
+	at := prerendered{m.slide, m.width, m.height}
+	if m.prerendered == at {
+		return nil
+	}
+	m.prerendered = at
+
+	slides := []*Slide{m.slide.Next, m.slide, m.slide.Prev}
+	return func() tea.Msg {
+		for _, s := range slides {
+			if s != nil {
+				s.Prerender(at.width, at.height)
+			}
+		}
+		return nil
+	}
+}
+
+func (m model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		slog.Info("Key pressed", "key", keyMsg.String())
 	}
@@ -343,20 +388,15 @@ func (m model) View() string {
 		(m.goTo != nil && m.goTo.IsShowing()) ||
 		(m.jump != nil && m.jump.IsShowing())
 
-	slideView := lipgloss.Place(
-		m.width,
-		m.height,
-		lipgloss.Center,
-		lipgloss.Center,
-		m.slide.View(
-			(m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating()) || hasOverlay,
-			m.width,
-			m.height,
-		),
-	)
+	transitioning := m.slide.ActiveTransition != nil && m.slide.ActiveTransition.Animating()
+	slideView := m.slide.View(transitioning || hasOverlay, m.width, m.height)
+	if transitioning {
+		// A slide comes centered on the screen already, but the frames of a
+		// transition may not fill it.
+		slideView = lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, slideView)
+	}
 
-	lines := strings.Split(slideView, "\n")
-	if len(lines) > m.height {
+	if strings.Count(slideView, "\n") >= m.height {
 		fmt.Print("\x1b_Ga=d\x1b\\")
 		return m.exceedScreenSizeView()
 	}
