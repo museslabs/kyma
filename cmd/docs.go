@@ -49,6 +49,7 @@ var docsCmd = &cobra.Command{
 
 		slog.Info("Successfully parsed presentation")
 
+		queryTerminalColors()
 		p := tea.NewProgram(
 			tui.New(root, "presentation.md"),
 			tea.WithAltScreen(),

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"image/color"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fsnotify/fsnotify"
+	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
 
 	"github.com/museslabs/kyma/internal/config"
@@ -96,6 +98,7 @@ var rootCmd = &cobra.Command{
 			return nil
 		}
 
+		queryTerminalColors()
 		p := tea.NewProgram(tui.New(root, filename), tea.WithAltScreen(), tea.WithMouseAllMotion())
 
 		if !static {
@@ -278,6 +281,22 @@ func parseSlide(s string) (slide, properties string) {
 	}
 
 	return slide, properties
+}
+
+// queryTerminalColors asks the terminal which colors it draws text and its
+// background in, for the morph transition to fade from and to. It has to run
+// before the program takes over the terminal, or the program would read the
+// answer as key presses.
+func queryTerminalColors() {
+	out := termenv.NewOutput(os.Stdout)
+	rgb := func(c termenv.Color) color.Color {
+		switch c.(type) {
+		case termenv.RGBColor, termenv.ANSIColor, termenv.ANSI256Color:
+			return termenv.ConvertToRGB(c)
+		}
+		return nil
+	}
+	transitions.SetTerminalColors(rgb(out.ForegroundColor()), rgb(out.BackgroundColor()))
 }
 
 func createErrorSlide(err error, transition string) *tui.Slide {
