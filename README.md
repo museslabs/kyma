@@ -67,6 +67,41 @@ A terminal-based presentation tool that creates beautiful presentations from mar
 go install github.com/museslabs/kyma@latest
 ```
 
+### Using Nix
+
+Temporarily build and run via nix flakes
+```sh
+nix run github:museslabs/kyma <path-to-md-file>
+```
+
+Install via nix flakes
+
+flake.nix
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    kyma = { 
+      url = "github:museslabs/kyma";
+    };
+  };
+}
+```
+
+configuration.nix
+```nix
+environment.systemPackages = with pkgs; [
+  inputs.kyma."${pkgs.stdenv.hostPlatform.system}".default
+]
+```
+
+home.nix
+```nix
+home.packages = with pkgs; [
+  inputs.kyma."${pkgs.stdenv.hostPlatform.system}".default
+]
+```
+
 ### From Source
 
 ```bash
